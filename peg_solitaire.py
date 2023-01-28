@@ -81,7 +81,7 @@ def main():
     confirm_to = False
     clear()
     while True:
-        if board == win_position:
+        if overlay_board == win_position:
             if set_number < 18:
                 print("CHEATER")
                 sys.exit(1)
@@ -92,6 +92,7 @@ def main():
                 print("GG!")
                 print("In", set_number, "moves!")
                 sys.exit(0)
+
         while not confirm_fr:
             show_board()
             key = getkey()
