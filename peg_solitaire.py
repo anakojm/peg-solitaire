@@ -57,10 +57,10 @@ win_position = [
 
 def clear():
     """Clears the screen"""
-    if name == 'nt':
-        _ = system('cls')
+    if name == "nt":
+        _ = system("cls")
     else:
-        _ = system('clear')
+        _ = system("clear")
 
 
 def show_board():
@@ -92,27 +92,27 @@ def main():
         while not confirm_fr:
             show_board()
             key = getkey()
-            if key == 'h':
+            if key == "h":
                 board[selection[1]][selection[0]] = old
-                old = overlay_board[selection[1]][selection[0]-1]
+                old = overlay_board[selection[1]][selection[0] - 1]
                 selection = selection[0] - 1, selection[1]
                 board[selection[1]][selection[0]] = CHR_SELECTION
 
-            elif key == 'j':
+            elif key == "j":
                 board[selection[1]][selection[0]] = old
-                old = overlay_board[selection[1]+1][selection[0]]
+                old = overlay_board[selection[1] + 1][selection[0]]
                 selection = selection[0], selection[1] + 1
                 board[selection[1]][selection[0]] = CHR_SELECTION
 
-            elif key == 'k':
+            elif key == "k":
                 board[selection[1]][selection[0]] = old
-                old = overlay_board[selection[1]-1][selection[0]]
+                old = overlay_board[selection[1] - 1][selection[0]]
                 selection = selection[0], selection[1] - 1
                 board[selection[1]][selection[0]] = CHR_SELECTION
 
-            elif key == 'l':
+            elif key == "l":
                 board[selection[1]][selection[0]] = old
-                old = overlay_board[selection[1]][selection[0]+1]
+                old = overlay_board[selection[1]][selection[0] + 1]
                 selection = selection[0] + 1, selection[1]
                 board[selection[1]][selection[0]] = CHR_SELECTION
 
@@ -129,27 +129,27 @@ def main():
             while not confirm_to:
                 show_board()
                 key = getkey()
-                if key == 'h':
+                if key == "h":
                     board[to[1]][to[0]] = old
-                    old = overlay_board[to[1]][to[0]-1]
+                    old = overlay_board[to[1]][to[0] - 1]
                     to = to[0] - 1, to[1]
                     board[to[1]][to[0]] = CHR_TO
 
-                elif key == 'j':
+                elif key == "j":
                     board[to[1]][to[0]] = old
-                    old = overlay_board[to[1]+1][to[0]]
+                    old = overlay_board[to[1] + 1][to[0]]
                     to = to[0], to[1] + 1
                     board[to[1]][to[0]] = CHR_TO
 
-                elif key == 'k':
+                elif key == "k":
                     board[to[1]][to[0]] = old
-                    old = overlay_board[to[1]-1][to[0]]
+                    old = overlay_board[to[1] - 1][to[0]]
                     to = to[0], to[1] - 1
                     board[to[1]][to[0]] = CHR_TO
 
-                elif key == 'l':
+                elif key == "l":
                     board[to[1]][to[0]] = old
-                    old = overlay_board[to[1]][to[0]+1]
+                    old = overlay_board[to[1]][to[0] + 1]
                     to = to[0] + 1, to[1]
                     board[to[1]][to[0]] = CHR_TO
 
@@ -161,10 +161,12 @@ def main():
                 clear()
 
         if confirm_fr is True and confirm_to is True:
-            board[(selection[1]+to[1])//2][(selection[0]+to[0])//2] = CHR_HOLE
+            board[(selection[1] + to[1]) // 2][(selection[0] + to[0]) // 2] = CHR_HOLE
             board[selection[1]][selection[0]] = CHR_HOLE
             board[to[1]][to[0]] = CHR_PEG
-            overlay_board[(selection[1]+to[1])//2][(selection[0]+to[0])//2] = CHR_HOLE
+            overlay_board[(selection[1] + to[1]) // 2][
+                (selection[0] + to[0]) // 2
+            ] = CHR_HOLE
             overlay_board[selection[1]][selection[0]] = CHR_HOLE
             overlay_board[to[1]][to[0]] = CHR_PEG
             confirm_fr, confirm_to = False, False
