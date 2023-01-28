@@ -14,6 +14,7 @@ The destination must be empty.
 <br>
 
 - Select "from" with hjkl, confirm with enter
+- Cancel by reselecting "from" and confirming with enter
 - Select "to" with hjkl, confirm with enter
 
 <br>

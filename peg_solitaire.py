@@ -72,11 +72,14 @@ def show_board():
 
 
 def main():
+    # TODO: fix IndexError when going oob
     selection = (0, 0)
+    to = (0, 0)
     old = " "
     set_number = 1
     confirm_fr = False
     confirm_to = False
+    clear()
     while True:
         if board == win_position:
             if set_number < 18:
@@ -121,7 +124,7 @@ def main():
 
             clear()
 
-        if confirm_fr is True:
+        if confirm_fr:
             board[selection[1]][selection[0]] = CHR_TO
             overlay_board[selection[1]][selection[0]] = CHR_FR
             old = CHR_FR
@@ -152,25 +155,28 @@ def main():
                     old = overlay_board[to[1]][to[0] + 1]
                     to = to[0] + 1, to[1]
                     board[to[1]][to[0]] = CHR_TO
-
-                elif key == keys.ENTER and old == CHR_HOLE:
-                    # TODO: implement a cancel feature
-                    # if overlay_board[to[1]][to[0]] == CHR_FR:
-                    #     confirm_fr, confirm_to = False, False
+                elif key == keys.ENTER and old in [CHR_FR, CHR_HOLE]:
+                    # TODO: Fix redo move after cancel
+                    if to == selection:
+                        overlay_board[selection[1]][selection[0]] = CHR_PEG
+                        board[selection[1]][selection[0]] = CHR_SELECTION
+                        confirm_fr, confirm_to = False, False
+                        old = CHR_PEG
                     confirm_to = True
                 clear()
 
-        if confirm_fr is True and confirm_to is True:
+        if confirm_fr and confirm_to:
             board[(selection[1] + to[1]) // 2][(selection[0] + to[0]) // 2] = CHR_HOLE
             board[selection[1]][selection[0]] = CHR_HOLE
-            board[to[1]][to[0]] = CHR_PEG
+            board[to[1]][to[0]] = CHR_SELECTION
             overlay_board[(selection[1] + to[1]) // 2][
                 (selection[0] + to[0]) // 2
             ] = CHR_HOLE
             overlay_board[selection[1]][selection[0]] = CHR_HOLE
             overlay_board[to[1]][to[0]] = CHR_PEG
             confirm_fr, confirm_to = False, False
-
+            selection = to
+            old = CHR_PEG
             set_number += 1
 
 
