@@ -11,12 +11,13 @@ a red o is the hole of the peg that was jumped and removed.
 Select "from" with the arrow keys or hjkl, confirm with enter or space
 Cancel by reselecting "from" and confirming with enter or space
 Select "to" with the arrow keys or hjkl, confirm with enter or space
+TODO: Check for legal move
+TODO: Save and resume
 """
 from os import system, name
 import sys
 from getkey import getkey, keys
 
-# jump_up, jump_down, jump_right, jump_left = False, False, False, False
 CHR_PEG = "·"
 CHR_SELECTION = "\x1b[1m*\x1b[0m"  # bold
 CHR_HOLE = "o"
@@ -29,7 +30,7 @@ JUMP_DOWN = ["j", keys.DOWN]
 JUMP_UP = ["k", keys.UP]
 JUMP_RIGHT = ["l", keys.RIGHT]
 CONFIRM = [keys.ENTER, keys.SPACE]
-# see https://en.wikipedia.org/wiki/Peg_solitaire#Solutions_to_the_English_game
+# See https://en.wikipedia.org/wiki/Peg_solitaire#Solutions_to_the_English_game
 MIN_LEGAL_MOVES = 18
 
 overlay_board = [
@@ -79,8 +80,39 @@ def show_board():
         print("\n", end="")
 
 
+def check_winned(set_number):
+    """Checs the current position to see if the player won"""
+    if overlay_board == win_position:
+        if set_number < MIN_LEGAL_MOVES:
+            print("CHEATER")
+            sys.exit(1)
+        elif set_number == MIN_LEGAL_MOVES:
+            print("NERD <3!")
+            sys.exit(0)
+        else:
+            print("GG!")
+            print("In", set_number, "moves!")
+            sys.exit(0)
+
+
+def eat():
+    global selection, to, set
+    board[(selection[1] + to[1]) // 2][(selection[0] + to[0]) // 2] = CHR_HOLE
+    board[selection[1]][selection[0]] = CHR_HOLE
+    board[to[1]][to[0]] = CHR_SELECTION
+    overlay_board[(selection[1] + to[1]) // 2][
+        (selection[0] + to[0]) // 2
+    ] = CHR_HOLE
+    overlay_board[selection[1]][selection[0]] = CHR_HOLE
+    overlay_board[to[1]][to[0]] = CHR_PEG
+    confirm_fr, confirm_to = False, False
+    selection = to
+    old = CHR_PEG
+    set_number += 1
+
+
 def main():
-    # TODO: fix IndexError when going oob
+    # TODO: break down main function into smaller functions
     selection = (0, 0)
     to = (0, 0)
     old = " "
@@ -89,43 +121,33 @@ def main():
     confirm_to = False
     clear()
     while True:
-        if overlay_board == win_position:
-            if set_number < MIN_LEGAL_MOVES:
-                print("CHEATER")
-                sys.exit(1)
-            elif set_number == MIN_LEGAL_MOVES:
-                print("NERD <3!")
-                sys.exit(0)
-            else:
-                print("GG!")
-                print("In", set_number, "moves!")
-                sys.exit(0)
+        check_winned(set_number)
 
         while not confirm_fr:
             show_board()
             key = getkey()
             if key in JUMP_LEFT:
                 board[selection[1]][selection[0]] = old
-                old = overlay_board[selection[1]][selection[0] - 1]
-                selection = selection[0] - 1, selection[1]
+                old = overlay_board[selection[1]][(selection[0] - 1) % len(board)]
+                selection = (selection[0] - 1) % len(board), selection[1]
                 board[selection[1]][selection[0]] = CHR_SELECTION
 
             elif key in JUMP_DOWN:
                 board[selection[1]][selection[0]] = old
-                old = overlay_board[selection[1] + 1][selection[0]]
-                selection = selection[0], selection[1] + 1
+                old = overlay_board[(selection[1] + 1) % len(board)][selection[0]]
+                selection = selection[0], (selection[1] + 1) % len(board)
                 board[selection[1]][selection[0]] = CHR_SELECTION
 
             elif key in JUMP_UP:
                 board[selection[1]][selection[0]] = old
-                old = overlay_board[selection[1] - 1][selection[0]]
-                selection = selection[0], selection[1] - 1
+                old = overlay_board[(selection[1] - 1) % len(board)][selection[0]]
+                selection = selection[0], (selection[1] - 1) % len(board)
                 board[selection[1]][selection[0]] = CHR_SELECTION
 
             elif key in JUMP_RIGHT:
                 board[selection[1]][selection[0]] = old
-                old = overlay_board[selection[1]][selection[0] + 1]
-                selection = selection[0] + 1, selection[1]
+                old = overlay_board[selection[1]][(selection[0] + 1) % len(board)]
+                selection = (selection[0] + 1) % len(board), selection[1]
                 board[selection[1]][selection[0]] = CHR_SELECTION
 
             elif key in CONFIRM and old == CHR_PEG:
@@ -176,18 +198,7 @@ def main():
                 clear()
 
         if confirm_fr and confirm_to:
-            board[(selection[1] + to[1]) // 2][(selection[0] + to[0]) // 2] = CHR_HOLE
-            board[selection[1]][selection[0]] = CHR_HOLE
-            board[to[1]][to[0]] = CHR_SELECTION
-            overlay_board[(selection[1] + to[1]) // 2][
-                (selection[0] + to[0]) // 2
-            ] = CHR_HOLE
-            overlay_board[selection[1]][selection[0]] = CHR_HOLE
-            overlay_board[to[1]][to[0]] = CHR_PEG
-            confirm_fr, confirm_to = False, False
-            selection = to
-            old = CHR_PEG
-            set_number += 1
+            eat()
 
 
 if __name__ == "__main__":
