@@ -13,9 +13,9 @@ The destination must be empty.
 
 <br>
 
-- Select "from" with hjkl, confirm with enter
-- Cancel by reselecting "from" and confirming with enter
-- Select "to" with hjkl, confirm with enter
+- Select "from" with the arrow keys or hjkl, confirm with enter or space
+- Cancel by reselecting "from" and confirming with enter or space
+- Select "to" with the arrow keys or hjkl, confirm with enter or space
 
 <br>
 

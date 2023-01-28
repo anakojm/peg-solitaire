@@ -8,8 +8,9 @@ over another one, "eating" it in the process. The destination must be empty.
 and o indicates an empty hole. A blue ¤ is the hole the current peg moved from;
 a red * is the final position of that peg,
 a red o is the hole of the peg that was jumped and removed.
-Select "from" with hjkl, confirm with enter
-Select "to" with hjkl, confirm with enter
+Select "from" with the arrow keys or hjkl, confirm with enter or space
+Cancel by reselecting "from" and confirming with enter or space
+Select "to" with the arrow keys or hjkl, confirm with enter or space
 """
 from os import system, name
 import sys
@@ -23,6 +24,13 @@ CHR_FR = "\x1b[94m¤\x1b[0m"  # blue
 CHR_TO = "\x1b[1m\x1b[91m*\x1b[0m"  # bold red
 # TODO: implement a representation of the eaten peg
 CHR_EATEN = "\x1b[91mo\x1b[0m"  # red
+JUMP_LEFT = ["h", keys.LEFT]
+JUMP_DOWN = ["j", keys.DOWN]
+JUMP_UP = ["k", keys.UP]
+JUMP_RIGHT = ["l", keys.RIGHT]
+CONFIRM = [keys.ENTER, keys.SPACE]
+# see https://en.wikipedia.org/wiki/Peg_solitaire#Solutions_to_the_English_game
+MIN_LEGAL_MOVES = 18
 
 overlay_board = [
     [" ", " ", CHR_PEG, CHR_PEG, CHR_PEG, " ", " "],
@@ -65,9 +73,9 @@ def clear():
 
 def show_board():
     """Shows the board"""
-    for i in board:
-        for k in i:
-            print(k, end=" ")
+    for row in board:
+        for col in row:
+            print(col, end=" ")
         print("\n", end="")
 
 
@@ -82,10 +90,10 @@ def main():
     clear()
     while True:
         if overlay_board == win_position:
-            if set_number < 18:
+            if set_number < MIN_LEGAL_MOVES:
                 print("CHEATER")
                 sys.exit(1)
-            elif set_number == 18:
+            elif set_number == MIN_LEGAL_MOVES:
                 print("NERD <3!")
                 sys.exit(0)
             else:
@@ -96,31 +104,31 @@ def main():
         while not confirm_fr:
             show_board()
             key = getkey()
-            if key == "h":
+            if key in JUMP_LEFT:
                 board[selection[1]][selection[0]] = old
                 old = overlay_board[selection[1]][selection[0] - 1]
                 selection = selection[0] - 1, selection[1]
                 board[selection[1]][selection[0]] = CHR_SELECTION
 
-            elif key == "j":
+            elif key in JUMP_DOWN:
                 board[selection[1]][selection[0]] = old
                 old = overlay_board[selection[1] + 1][selection[0]]
                 selection = selection[0], selection[1] + 1
                 board[selection[1]][selection[0]] = CHR_SELECTION
 
-            elif key == "k":
+            elif key in JUMP_UP:
                 board[selection[1]][selection[0]] = old
                 old = overlay_board[selection[1] - 1][selection[0]]
                 selection = selection[0], selection[1] - 1
                 board[selection[1]][selection[0]] = CHR_SELECTION
 
-            elif key == "l":
+            elif key in JUMP_RIGHT:
                 board[selection[1]][selection[0]] = old
                 old = overlay_board[selection[1]][selection[0] + 1]
                 selection = selection[0] + 1, selection[1]
                 board[selection[1]][selection[0]] = CHR_SELECTION
 
-            elif key == keys.ENTER and old == CHR_PEG:
+            elif key in CONFIRM and old == CHR_PEG:
                 confirm_fr = True
 
             clear()
@@ -133,36 +141,37 @@ def main():
             while not confirm_to:
                 show_board()
                 key = getkey()
-                if key == "h":
+                if key in JUMP_LEFT:
                     board[to[1]][to[0]] = old
                     old = overlay_board[to[1]][to[0] - 1]
                     to = to[0] - 1, to[1]
                     board[to[1]][to[0]] = CHR_TO
 
-                elif key == "j":
+                elif key in JUMP_DOWN:
                     board[to[1]][to[0]] = old
                     old = overlay_board[to[1] + 1][to[0]]
                     to = to[0], to[1] + 1
                     board[to[1]][to[0]] = CHR_TO
 
-                elif key == "k":
+                elif key in JUMP_UP:
                     board[to[1]][to[0]] = old
                     old = overlay_board[to[1] - 1][to[0]]
                     to = to[0], to[1] - 1
                     board[to[1]][to[0]] = CHR_TO
 
-                elif key == "l":
+                elif key in JUMP_RIGHT:
                     board[to[1]][to[0]] = old
                     old = overlay_board[to[1]][to[0] + 1]
                     to = to[0] + 1, to[1]
                     board[to[1]][to[0]] = CHR_TO
-                elif key == keys.ENTER and old in [CHR_FR, CHR_HOLE]:
+                elif key in CONFIRM and old in [CHR_FR, CHR_HOLE]:
                     # TODO: Fix redo move after cancel
-                    if to == selection:
+                    if old == CHR_FR:
                         overlay_board[selection[1]][selection[0]] = CHR_PEG
                         board[selection[1]][selection[0]] = CHR_SELECTION
-                        confirm_fr, confirm_to = False, False
                         old = CHR_PEG
+                        to = (0, 0)
+                        confirm_fr, confirm_to = False, False
                     confirm_to = True
                 clear()
 
