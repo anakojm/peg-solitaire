@@ -30,3 +30,5 @@ Screenshot:
 <br>
 
 TODO: `grep -rnw peg_solitaire.py -e "TODO:"`
+
+Thank you to [u/RiceKrispyPooHead](https://www.reddit.com/user/RiceKrispyPooHead/) for their help!
