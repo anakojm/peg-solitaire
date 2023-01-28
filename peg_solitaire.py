@@ -77,6 +77,7 @@ def main():
     set_number = 1
     confirm_fr = False
     confirm_to = False
+    clear()
     while True:
         if board == win_position:
             if set_number < 18:
