@@ -20,7 +20,7 @@ CHR_PEG = "·"
 CHR_SELECTION = "\x1b[1m*\x1b[0m"  # bold
 CHR_HOLE = "o"
 CHR_FR = "\x1b[94m¤\x1b[0m"  # blue
-CHR_TO = "\x1b[91m*\x1b[0m"  # red
+CHR_TO = "\x1b[1m\x1b[91m*\x1b[0m"  # bold red
 # TODO: implement a representation of the eaten peg
 CHR_EATEN = "\x1b[91mo\x1b[0m"  # red
 
@@ -161,7 +161,7 @@ def main():
                 clear()
 
         if confirm_fr is True and confirm_to is True:
-            board[(selection[1]+to[1])//2][(selection[0]+to[0])//2] = CHR_EATEN
+            board[(selection[1]+to[1])//2][(selection[0]+to[0])//2] = CHR_HOLE
             board[selection[1]][selection[0]] = CHR_HOLE
             board[to[1]][to[0]] = CHR_PEG
             overlay_board[(selection[1]+to[1])//2][(selection[0]+to[0])//2] = CHR_HOLE
