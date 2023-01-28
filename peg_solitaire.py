@@ -74,6 +74,7 @@ def clear():
 
 def show_board():
     """Shows the board"""
+    print('\033[?25l', end="")  # hides the cursor
     for row in board:
         for col in row:
             print(col, end=" ")
@@ -81,7 +82,7 @@ def show_board():
 
 
 def check_winned(set_number):
-    """Checs the current position to see if the player won"""
+    """Checks the current position to see if the player won"""
     if overlay_board == win_position:
         if set_number < MIN_LEGAL_MOVES:
             print("CHEATER")
@@ -95,20 +96,8 @@ def check_winned(set_number):
             sys.exit(0)
 
 
-def eat():
-    global selection, to, set
-    board[(selection[1] + to[1]) // 2][(selection[0] + to[0]) // 2] = CHR_HOLE
-    board[selection[1]][selection[0]] = CHR_HOLE
-    board[to[1]][to[0]] = CHR_SELECTION
-    overlay_board[(selection[1] + to[1]) // 2][
-        (selection[0] + to[0]) // 2
-    ] = CHR_HOLE
-    overlay_board[selection[1]][selection[0]] = CHR_HOLE
-    overlay_board[to[1]][to[0]] = CHR_PEG
-    confirm_fr, confirm_to = False, False
-    selection = to
-    old = CHR_PEG
-    set_number += 1
+def can_eat(selection, to, key):
+    """checks if the player can eat"""
 
 
 def main():
@@ -165,26 +154,26 @@ def main():
                 key = getkey()
                 if key in JUMP_LEFT:
                     board[to[1]][to[0]] = old
-                    old = overlay_board[to[1]][to[0] - 1]
-                    to = to[0] - 1, to[1]
+                    old = overlay_board[to[1]][(to[0] - 1) % len(board)]
+                    to = (to[0] - 1) % len(board), to[1]
                     board[to[1]][to[0]] = CHR_TO
 
                 elif key in JUMP_DOWN:
                     board[to[1]][to[0]] = old
-                    old = overlay_board[to[1] + 1][to[0]]
-                    to = to[0], to[1] + 1
+                    old = overlay_board[(to[1] + 1) % len(board)][to[0]]
+                    to = to[0], (to[1] + 1) % len(board)
                     board[to[1]][to[0]] = CHR_TO
 
                 elif key in JUMP_UP:
                     board[to[1]][to[0]] = old
-                    old = overlay_board[to[1] - 1][to[0]]
-                    to = to[0], to[1] - 1
+                    old = overlay_board[(to[1] - 1) % len(board)][to[0]]
+                    to = to[0], (to[1] - 1) % len(board)
                     board[to[1]][to[0]] = CHR_TO
 
                 elif key in JUMP_RIGHT:
                     board[to[1]][to[0]] = old
-                    old = overlay_board[to[1]][to[0] + 1]
-                    to = to[0] + 1, to[1]
+                    old = overlay_board[to[1]][(to[0] + 1) % len(board)]
+                    to = (to[0] + 1) % len(board), to[1]
                     board[to[1]][to[0]] = CHR_TO
                 elif key in CONFIRM and old in [CHR_FR, CHR_HOLE]:
                     # TODO: Fix redo move after cancel
@@ -198,7 +187,18 @@ def main():
                 clear()
 
         if confirm_fr and confirm_to:
-            eat()
+            board[(selection[1] + to[1]) // 2][(selection[0] + to[0]) // 2] = CHR_HOLE
+            board[selection[1]][selection[0]] = CHR_HOLE
+            board[to[1]][to[0]] = CHR_SELECTION
+            overlay_board[(selection[1] + to[1]) // 2][
+                (selection[0] + to[0]) // 2
+            ] = CHR_HOLE
+            overlay_board[selection[1]][selection[0]] = CHR_HOLE
+            overlay_board[to[1]][to[0]] = CHR_PEG
+            confirm_fr, confirm_to = False, False
+            selection = to
+            old = CHR_PEG
+            set_number += 1
 
 
 if __name__ == "__main__":
