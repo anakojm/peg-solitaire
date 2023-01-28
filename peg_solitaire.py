@@ -30,6 +30,7 @@ JUMP_DOWN = ["j", keys.DOWN]
 JUMP_UP = ["k", keys.UP]
 JUMP_RIGHT = ["l", keys.RIGHT]
 CONFIRM = [keys.ENTER, keys.SPACE]
+QUIT = ["q", "m", keys.ESCAPE]
 # See https://en.wikipedia.org/wiki/Peg_solitaire#Solutions_to_the_English_game
 MIN_LEGAL_MOVES = 18
 
@@ -96,8 +97,13 @@ def check_winned(set_number):
             sys.exit(0)
 
 
-def can_eat(selection, to, key):
-    """checks if the player can eat"""
+def quit_game(set_number):
+    clear()
+    if set_number in [0, 1]:
+        print("You quit after", set_number, "move.")
+    else:
+        print("You quit after", set_number, "moves.")
+    sys.exit(0)
 
 
 def main():
@@ -105,7 +111,7 @@ def main():
     selection = (0, 0)
     to = (0, 0)
     old = " "
-    set_number = 1
+    set_number = 0
     confirm_fr = False
     confirm_to = False
     clear()
@@ -115,6 +121,7 @@ def main():
         while not confirm_fr:
             show_board()
             key = getkey()
+
             if key in JUMP_LEFT:
                 board[selection[1]][selection[0]] = old
                 old = overlay_board[selection[1]][(selection[0] - 1) % len(board)]
@@ -140,7 +147,10 @@ def main():
                 board[selection[1]][selection[0]] = CHR_SELECTION
 
             elif key in CONFIRM and old == CHR_PEG:
-                confirm_fr = True
+                confirm_fr, confirm_to = True, False
+
+            elif key in QUIT:
+                quit_game(set_number)
 
             clear()
 
@@ -152,6 +162,7 @@ def main():
             while not confirm_to:
                 show_board()
                 key = getkey()
+
                 if key in JUMP_LEFT:
                     board[to[1]][to[0]] = old
                     old = overlay_board[to[1]][(to[0] - 1) % len(board)]
@@ -175,15 +186,21 @@ def main():
                     old = overlay_board[to[1]][(to[0] + 1) % len(board)]
                     to = (to[0] + 1) % len(board), to[1]
                     board[to[1]][to[0]] = CHR_TO
+
                 elif key in CONFIRM and old in [CHR_FR, CHR_HOLE]:
-                    # TODO: Fix redo move after cancel
                     if old == CHR_FR:
                         overlay_board[selection[1]][selection[0]] = CHR_PEG
                         board[selection[1]][selection[0]] = CHR_SELECTION
                         old = CHR_PEG
-                        to = (0, 0)
                         confirm_fr, confirm_to = False, False
-                    confirm_to = True
+                        clear()
+                        # TODO: Don't use break to cancel
+                        break
+                    else:
+                        confirm_to = True
+
+                elif key in QUIT:
+                    quit_game(set_number)
                 clear()
 
         if confirm_fr and confirm_to:
