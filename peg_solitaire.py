@@ -8,12 +8,12 @@ over another one, "eating" it in the process. The destination must be empty.
 and o indicates an empty hole. A blue ¤ is the hole the current peg moved from;
 a red * is the final position of that peg,
 a red o is the hole of the peg that was jumped and removed.
-TODO: Check for legal move
 TODO: Save and resume
 TODO: Use curses
 """
 from os import system, name
 import sys
+from math import sqrt
 from getkey import getkey, keys
 
 # Settings:
@@ -152,6 +152,13 @@ def quit_game(set_number):
     sys.exit(0)
 
 
+def legal(selection, to):
+    # TODO: find and fix legal edge cases
+    if sqrt((selection[1] - to[1])**2 + (selection[0] - to[0])**2) != 2:
+        return False
+    return True
+
+
 def main():
     # TODO: break down main function into smaller functions
     selection = (0, 0)
@@ -244,6 +251,16 @@ def main():
                     if old == CHR_FR:
                         overlay_board[selection[1]][selection[0]] = CHR_PEG
                         board[selection[1]][selection[0]] = CHR_SELECTION
+                        old = CHR_PEG
+                        confirm_fr, confirm_to = False, False
+                        clear()
+                        # TODO: Don't use break to cancel
+                        break
+                    elif not legal(selection, to):
+                        overlay_board[selection[1]][selection[0]] = CHR_PEG
+                        board[selection[1]][selection[0]] = CHR_SELECTION
+                        overlay_board[to[1]][to[0]] = old
+                        board[to[1]][to[0]] = old
                         old = CHR_PEG
                         confirm_fr, confirm_to = False, False
                         clear()
