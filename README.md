@@ -1,6 +1,19 @@
 # Peg solitaire
-
 A game of peg solitaire in the terminal, written in python
+
+<br>
+
+- Select "from" with the arrow keys or hjkl, confirm with enter or space (configurable)
+- Cancel by reselecting "from" and confirming with enter or space
+- Select "to" with the arrow keys or hjkl, confirm with enter or space
+- Quit anytime with ESC, q or m (configurable)
+- You can switch between the European and the English version by switching a boolean in the code, a custom board is also possible.
+
+<br>
+
+UI: `·` indicates a peg in a hole, `*` emboldened indicates the peg to be moved,
+and `o` indicates an empty hole. A blue `¤` is the hole the current peg moved from;
+a red `*` is the final position of that peg, a red `o` is the hole of the peg that was jumped and removed.
 
 <br>
 
@@ -12,16 +25,6 @@ over another one, "eating" it in the process.
 The destination must be empty.
 
 <br>
-
-- Select "from" with the arrow keys or hjkl, confirm with enter or space
-- Cancel by reselecting "from" and confirming with enter or space
-- Select "to" with the arrow keys or hjkl, confirm with enter or space
-
-<br>
-
-UI: `·` indicates a peg in a hole, `*` emboldened indicates the peg to be moved,
-and `o` indicates an empty hole. A blue `¤` is the hole the current peg moved from;
-a red `*` is the final position of that peg.
 
 Screenshot:
 
