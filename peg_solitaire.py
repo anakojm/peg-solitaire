@@ -13,6 +13,7 @@ Cancel by reselecting "from" and confirming with enter or space
 Select "to" with the arrow keys or hjkl, confirm with enter or space
 TODO: Check for legal move
 TODO: Save and resume
+TODO: Use curses
 """
 from os import system, name
 import sys

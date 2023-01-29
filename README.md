@@ -29,6 +29,6 @@ Screenshot:
 
 <br>
 
-TODO: `grep -rnw peg_solitaire.py -e "TODO:"`
+TODO: `grep "TODO" peg_solitaire.py`
 
 Thank you to [u/RiceKrispyPooHead](https://www.reddit.com/user/RiceKrispyPooHead/) for their help!
