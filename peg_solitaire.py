@@ -10,9 +10,13 @@ a red * is the final position of that peg,
 a red o is the hole of the peg that was jumped and removed.
 TODO: Save and resume
 TODO: Use curses
+TODO: add type hints
+TODO: use wikipedia's syntax to input moves
+TODO: implement a cancel feature during save/load
 """
-from os import system, name
+import os
 import sys
+import ast
 from math import sqrt
 from getkey import getkey, keys
 
@@ -29,6 +33,8 @@ JUMP_UP = ["k", keys.UP]
 JUMP_RIGHT = ["l", keys.RIGHT]
 CONFIRM = [keys.ENTER, keys.SPACE]
 QUIT = ["q", "m", keys.ESCAPE]
+SAVE = ["s", "J"]
+LOAD = ["L"]
 
 # UI elements
 CHR_EMPTY = " "
@@ -41,6 +47,7 @@ CHR_EATEN = "\x1b[91mo\x1b[0m"  # red
 
 # See https://en.wikipedia.org/wiki/Peg_solitaire#Solutions_to_the_English_game
 MIN_LEGAL_MOVES = 18
+CAN_JUMP_OVER = [CHR_FR, CHR_HOLE, CHR_EATEN]
 
 # The code is flexible enough that you should be able to use any board
 if ENGLISH:
@@ -94,14 +101,15 @@ elif EUROPEAN:
         [CHR_EMPTY, CHR_PEG, CHR_PEG, CHR_PEG, CHR_PEG, CHR_PEG, CHR_EMPTY],
         [CHR_EMPTY, CHR_EMPTY, CHR_PEG, CHR_PEG, CHR_PEG, CHR_EMPTY, CHR_EMPTY],
     ]
+    # No win_position, you win if there is one peg remaining
 
 
 def clear():
     """Clears the screen"""
-    if name == "nt":
-        _ = system("cls")
+    if os.name == "nt":
+        _ = os.system("cls")
     else:
-        _ = system("clear")
+        _ = os.system("clear")
 
 
 def show_board():
@@ -153,10 +161,41 @@ def quit_game(set_number):
 
 
 def legal(selection, to):
-    # TODO: find and fix legal edge cases
+    """
+    Checks for legality of a move (if it is 3 stone long, couting from 0,
+    using the Pythagorean theorem, stay in school kids, it make you better at
+    pvp
+    TODO: find and fix legal edge cases
+    """
     if sqrt((selection[1] - to[1])**2 + (selection[0] - to[0])**2) != 2:
         return False
     return True
+
+
+def save(overlay_board):
+    """
+    Save the current game to a specified file
+    TODO: fix load bug that lead to multiple CHR_EATEN by properly exporting all variables, don't forget to change CAN_JUMP_OVER after
+    """
+    print("We are in", os.getcwd())
+    filename = input(">>>")
+    file = open(filename, "w")
+    file.write(str(overlay_board))
+    file.close()
+
+
+def load():
+    """Load a game"""
+    global CHR_SELECTION, board, overlay_board
+    print("We are in", os.getcwd())
+    filename = input(">>>")
+    file = open(filename, "r")
+    overlay_board = file.read()
+    file.close()
+    board = overlay_board[:]
+    board = ast.literal_eval(board)
+    board[0][0] = CHR_SELECTION
+    overlay_board = ast.literal_eval(overlay_board)
 
 
 def main():
@@ -212,6 +251,20 @@ def main():
             elif key in QUIT:
                 quit_game(set_number)
 
+            elif key in SAVE:
+                save(overlay_board)
+
+            elif key in LOAD:
+                load()
+                selection = (0, 0)
+                to = (0, 0)
+                old = " "
+                old_selection = selection
+                old_to = to
+                set_number = 0
+                confirm_fr = False
+                confirm_to = False
+
             clear()
 
         if confirm_fr:
@@ -247,7 +300,7 @@ def main():
                     to = (to[0] + 1) % len(board), to[1]
                     board[to[1]][to[0]] = CHR_TO
 
-                elif key in CONFIRM and old in [CHR_FR, CHR_HOLE]:
+                elif key in CONFIRM and old in CAN_JUMP_OVER:
                     if old == CHR_FR:
                         overlay_board[selection[1]][selection[0]] = CHR_PEG
                         board[selection[1]][selection[0]] = CHR_SELECTION
@@ -271,6 +324,23 @@ def main():
 
                 elif key in QUIT:
                     quit_game(set_number)
+
+                # fixing CHR_EATEN issue would fix this too
+                # elif key in SAVE:
+                #     save(overlay_board)
+
+                elif key in LOAD:
+                    load()
+                    selection = (0, 0)
+                    to = (0, 0)
+                    old = " "
+                    old_selection = selection
+                    old_to = to
+                    set_number = 0
+                    confirm_fr = False
+                    confirm_to = False
+                    # TODO: Don't use break here
+                    break
 
                 clear()
 

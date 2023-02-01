@@ -3,11 +3,14 @@ A game of peg solitaire in the terminal, written in python
 
 <br>
 
-- Select "from" with the arrow keys or hjkl, confirm with enter or space (configurable)
+- Select "from" with the arrow keys or hjkl, confirm with enter or space
 - Cancel by reselecting "from" and confirming with enter or space
 - Select "to" with the arrow keys or hjkl, confirm with enter or space
-- Quit anytime with ESC, q or m (configurable)
+- Quit anytime with ESC, q or m
 - You can switch between the European and the English version by switching a boolean in the code, a custom board is also possible.
+- You can save a game with s or J, you can't save a game after selecting a peg, for technical reasons (I suck a programming)
+- You can load a game with L
+- All the keybinds are easily configurable in the code
 
 <br>
 
@@ -20,7 +23,7 @@ a red `*` is the final position of that peg, a red `o` is the hole of the peg th
 The goal of the game is to empty the board except for one center peg.
 
 To reach that goal you can move a piece. You can only move a piece by "jumping"
-over another one, "eating" it in the process. 
+over another one, "eating" it in the process.
 
 The destination must be empty.
 
