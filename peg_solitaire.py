@@ -140,13 +140,17 @@ def quit_winned(set_number):
     """Function that is called upon winning the game"""
     if set_number < MIN_LEGAL_MOVES:
         print("CHEATER")
+        print('\x1b[?25h', end="")  # shows the cursor
         sys.exit(1)
     elif set_number == MIN_LEGAL_MOVES:
         print("NERD <3!")
+        print('\x1b[?25h', end="")  # shows the cursor
         sys.exit(0)
     else:
         print("GG!")
         print("In", set_number, "moves!")
+        print('\x1b[?25h')  # shows the cursor
+        print('\x1b[?1049h', end="")
         sys.exit(0)
 
 
@@ -157,6 +161,7 @@ def quit_game(set_number):
         print("You quit after", set_number, "move.")
     else:
         print("You quit after", set_number, "moves.")
+    print('\x1b[?25h', end="")  # shows the cursor
     sys.exit(0)
 
 
@@ -177,6 +182,7 @@ def save(overlay_board):
     Save the current game to a specified file
     TODO: fix load bug that lead to multiple CHR_EATEN by properly exporting all variables, don't forget to change CAN_JUMP_OVER after
     """
+    print('\x1b[?25h', end="")  # shows the cursor
     print("We are in", os.getcwd())
     filename = input(">>>")
     file = open(filename, "w")
@@ -187,6 +193,7 @@ def save(overlay_board):
 def load():
     """Load a game"""
     global CHR_SELECTION, board, overlay_board
+    print('\x1b[?25h', end="")  # shows the cursor
     print("We are in", os.getcwd())
     filename = input(">>>")
     file = open(filename, "r")
