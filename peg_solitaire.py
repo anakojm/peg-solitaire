@@ -8,7 +8,6 @@ over another one, "eating" it in the process. The destination must be empty.
 and o indicates an empty hole. A blue ¤ is the hole the current peg moved from;
 a red * is the final position of that peg,
 a red o is the hole of the peg that was jumped and removed.
-TODO: Save and resume
 TODO: Use curses
 TODO: add type hints
 TODO: use wikipedia's syntax to input moves
@@ -167,12 +166,13 @@ def quit_game(set_number):
 
 def legal(selection, to):
     """
-    Checks for legality of a move (if it is 3 stone long, couting from 0,
+    Checks for legality of a move (if it is 3 stone long, counting from 0,
     using the Pythagorean theorem, stay in school kids, it make you better at
     pvp
     TODO: find and fix legal edge cases
     """
-    if sqrt((selection[1] - to[1])**2 + (selection[0] - to[0])**2) != 2:
+    if sqrt((selection[1] - to[1])**2 + (selection[0] - to[0])**2) != 2 or\
+            board[(selection[1] + to[1]) // 2][(selection[0] + to[0]) // 2] != CHR_PEG:
         return False
     return True
 
