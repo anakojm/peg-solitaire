@@ -149,17 +149,12 @@ def quit_winned(set_number):
         print("GG!")
         print("In", set_number, "moves!")
         print('\x1b[?25h')  # shows the cursor
-        print('\x1b[?1049h', end="")
         sys.exit(0)
 
 
-def quit_game(set_number):
+def quit_game():
     """Function that is called upon pressing an element of the QUIT list"""
     clear()
-    if set_number in [0, 1]:
-        print("You quit after", set_number, "move.")
-    else:
-        print("You quit after", set_number, "moves.")
     print('\x1b[?25h', end="")  # shows the cursor
     sys.exit(0)
 
@@ -256,7 +251,7 @@ def main():
                     board[(old_selection[1] + old_to[1]) // 2][(old_selection[0] + old_to[0]) // 2] = CHR_HOLE
 
             elif key in QUIT:
-                quit_game(set_number)
+                quit_game()
 
             elif key in SAVE:
                 save(overlay_board)
@@ -330,7 +325,7 @@ def main():
                         confirm_to = True
 
                 elif key in QUIT:
-                    quit_game(set_number)
+                    quit_game()
 
                 # fixing CHR_EATEN issue would fix this too
                 # elif key in SAVE:
