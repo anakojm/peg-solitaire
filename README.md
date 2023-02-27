@@ -6,7 +6,7 @@ A game of peg solitaire in the terminal, written in python
 - Select "from" with the arrow keys or hjkl, confirm with enter or space
 - Cancel by reselecting "from" and confirming with enter or space
 - Select "to" with the arrow keys or hjkl, confirm with enter or space
-- Quit anytime with ESC, q or m
+- Quit anytime with escape, q or m
 - You can switch between the European and the English version by switching a boolean in the code, a custom board is also possible.
 - You can save a game with s or J, you can't save a game after selecting a peg, for technical reasons (I suck a programming)
 - You can load a game with L

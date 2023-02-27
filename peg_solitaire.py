@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/bin/env python3
 """
 This is a game of peg solitaire in python
 The goal of the game is to empty the board except for one center peg
