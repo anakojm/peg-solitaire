@@ -200,61 +200,134 @@ def load():
     overlay_board = ast.literal_eval(overlay_board)
 
 
-def main():
-    # TODO: break down main function into smaller functions
-    selection = (0, 0)
-    to = (0, 0)
-    old = " "
-    old_selection = selection
-    old_to = to
-    set_number = 0
-    confirm_fr = False
-    confirm_to = False
-    clear()
-    while True:
-        check_winned(set_number)
+selection = (0, 0)
+to = (0, 0)
+old = " "
+old_selection = selection
+old_to = to
+set_number = 0
+confirm_fr = False
+confirm_to = False
+clear()
+while True:
+    check_winned(set_number)
 
-        while not confirm_fr:
+    while not confirm_fr:
+        show_board()
+        key = getkey()
+
+        if key in JUMP_LEFT:
+            board[selection[1]][selection[0]] = old
+            old = overlay_board[selection[1]][(selection[0] - 1) % len(board)]
+            selection = (selection[0] - 1) % len(board), selection[1]
+            board[selection[1]][selection[0]] = CHR_SELECTION
+
+        elif key in JUMP_DOWN:
+            board[selection[1]][selection[0]] = old
+            old = overlay_board[(selection[1] + 1) % len(board)][selection[0]]
+            selection = selection[0], (selection[1] + 1) % len(board)
+            board[selection[1]][selection[0]] = CHR_SELECTION
+
+        elif key in JUMP_UP:
+            board[selection[1]][selection[0]] = old
+            old = overlay_board[(selection[1] - 1) % len(board)][selection[0]]
+            selection = selection[0], (selection[1] - 1) % len(board)
+            board[selection[1]][selection[0]] = CHR_SELECTION
+
+        elif key in JUMP_RIGHT:
+            board[selection[1]][selection[0]] = old
+            old = overlay_board[selection[1]][(selection[0] + 1) % len(board)]
+            selection = (selection[0] + 1) % len(board), selection[1]
+            board[selection[1]][selection[0]] = CHR_SELECTION
+
+        elif key in CONFIRM and old == CHR_PEG:
+            confirm_fr, confirm_to = True, False
+            if set_number > 0:
+                overlay_board[(old_selection[1] + old_to[1]) // 2][
+                    (old_selection[0] + old_to[0]) // 2
+                ] = CHR_HOLE
+                board[(old_selection[1] + old_to[1]) // 2][(old_selection[0] + old_to[0]) // 2] = CHR_HOLE
+
+        elif key in QUIT:
+            quit_game()
+
+        elif key in SAVE:
+            save(overlay_board)
+
+        elif key in LOAD:
+            load()
+            selection = (0, 0)
+            to = (0, 0)
+            old = " "
+            old_selection = selection
+            old_to = to
+            set_number = 0
+            confirm_fr = False
+            confirm_to = False
+
+        clear()
+
+    if confirm_fr:
+        board[selection[1]][selection[0]] = CHR_TO
+        overlay_board[selection[1]][selection[0]] = CHR_FR
+        old = CHR_FR
+        to = selection
+        while not confirm_to:
             show_board()
             key = getkey()
 
             if key in JUMP_LEFT:
-                board[selection[1]][selection[0]] = old
-                old = overlay_board[selection[1]][(selection[0] - 1) % len(board)]
-                selection = (selection[0] - 1) % len(board), selection[1]
-                board[selection[1]][selection[0]] = CHR_SELECTION
+                board[to[1]][to[0]] = old
+                old = overlay_board[to[1]][(to[0] - 1) % len(board)]
+                to = (to[0] - 1) % len(board), to[1]
+                board[to[1]][to[0]] = CHR_TO
 
             elif key in JUMP_DOWN:
-                board[selection[1]][selection[0]] = old
-                old = overlay_board[(selection[1] + 1) % len(board)][selection[0]]
-                selection = selection[0], (selection[1] + 1) % len(board)
-                board[selection[1]][selection[0]] = CHR_SELECTION
+                board[to[1]][to[0]] = old
+                old = overlay_board[(to[1] + 1) % len(board)][to[0]]
+                to = to[0], (to[1] + 1) % len(board)
+                board[to[1]][to[0]] = CHR_TO
 
             elif key in JUMP_UP:
-                board[selection[1]][selection[0]] = old
-                old = overlay_board[(selection[1] - 1) % len(board)][selection[0]]
-                selection = selection[0], (selection[1] - 1) % len(board)
-                board[selection[1]][selection[0]] = CHR_SELECTION
+                board[to[1]][to[0]] = old
+                old = overlay_board[(to[1] - 1) % len(board)][to[0]]
+                to = to[0], (to[1] - 1) % len(board)
+                board[to[1]][to[0]] = CHR_TO
 
             elif key in JUMP_RIGHT:
-                board[selection[1]][selection[0]] = old
-                old = overlay_board[selection[1]][(selection[0] + 1) % len(board)]
-                selection = (selection[0] + 1) % len(board), selection[1]
-                board[selection[1]][selection[0]] = CHR_SELECTION
+                board[to[1]][to[0]] = old
+                old = overlay_board[to[1]][(to[0] + 1) % len(board)]
+                to = (to[0] + 1) % len(board), to[1]
+                board[to[1]][to[0]] = CHR_TO
 
-            elif key in CONFIRM and old == CHR_PEG:
-                confirm_fr, confirm_to = True, False
-                if set_number > 0:
-                    overlay_board[(old_selection[1] + old_to[1]) // 2][
-                        (old_selection[0] + old_to[0]) // 2
-                    ] = CHR_HOLE
-                    board[(old_selection[1] + old_to[1]) // 2][(old_selection[0] + old_to[0]) // 2] = CHR_HOLE
+            elif key in CONFIRM and old in CAN_JUMP_OVER:
+                if old == CHR_FR:
+                    overlay_board[selection[1]][selection[0]] = CHR_PEG
+                    board[selection[1]][selection[0]] = CHR_SELECTION
+                    old = CHR_PEG
+                    confirm_fr, confirm_to = False, False
+                    clear()
+                    # TODO: Don't use break to cancel
+                    break
+                elif not legal(selection, to):
+                    overlay_board[selection[1]][selection[0]] = CHR_PEG
+                    board[selection[1]][selection[0]] = CHR_SELECTION
+                    overlay_board[to[1]][to[0]] = old
+                    board[to[1]][to[0]] = old
+                    old = CHR_PEG
+                    confirm_fr, confirm_to = False, False
+                    clear()
+                    # TODO: Don't use break to cancel
+                    break
+                else:
+                    confirm_to = True
 
             elif key in QUIT:
                 quit_game()
 
-            elif key in SAVE:
-                save(overlay_board)
+            # fixing CHR_EATEN issue would fix this too
+            # elif key in SAVE:
+            #     save(overlay_board)
 
             elif key in LOAD:
                 load()
@@ -266,102 +339,23 @@ def main():
                 set_number = 0
                 confirm_fr = False
                 confirm_to = False
+                # TODO: Don't use break here
+                break
 
             clear()
 
-        if confirm_fr:
-            board[selection[1]][selection[0]] = CHR_TO
-            overlay_board[selection[1]][selection[0]] = CHR_FR
-            old = CHR_FR
-            to = selection
-            while not confirm_to:
-                show_board()
-                key = getkey()
-
-                if key in JUMP_LEFT:
-                    board[to[1]][to[0]] = old
-                    old = overlay_board[to[1]][(to[0] - 1) % len(board)]
-                    to = (to[0] - 1) % len(board), to[1]
-                    board[to[1]][to[0]] = CHR_TO
-
-                elif key in JUMP_DOWN:
-                    board[to[1]][to[0]] = old
-                    old = overlay_board[(to[1] + 1) % len(board)][to[0]]
-                    to = to[0], (to[1] + 1) % len(board)
-                    board[to[1]][to[0]] = CHR_TO
-
-                elif key in JUMP_UP:
-                    board[to[1]][to[0]] = old
-                    old = overlay_board[(to[1] - 1) % len(board)][to[0]]
-                    to = to[0], (to[1] - 1) % len(board)
-                    board[to[1]][to[0]] = CHR_TO
-
-                elif key in JUMP_RIGHT:
-                    board[to[1]][to[0]] = old
-                    old = overlay_board[to[1]][(to[0] + 1) % len(board)]
-                    to = (to[0] + 1) % len(board), to[1]
-                    board[to[1]][to[0]] = CHR_TO
-
-                elif key in CONFIRM and old in CAN_JUMP_OVER:
-                    if old == CHR_FR:
-                        overlay_board[selection[1]][selection[0]] = CHR_PEG
-                        board[selection[1]][selection[0]] = CHR_SELECTION
-                        old = CHR_PEG
-                        confirm_fr, confirm_to = False, False
-                        clear()
-                        # TODO: Don't use break to cancel
-                        break
-                    elif not legal(selection, to):
-                        overlay_board[selection[1]][selection[0]] = CHR_PEG
-                        board[selection[1]][selection[0]] = CHR_SELECTION
-                        overlay_board[to[1]][to[0]] = old
-                        board[to[1]][to[0]] = old
-                        old = CHR_PEG
-                        confirm_fr, confirm_to = False, False
-                        clear()
-                        # TODO: Don't use break to cancel
-                        break
-                    else:
-                        confirm_to = True
-
-                elif key in QUIT:
-                    quit_game()
-
-                # fixing CHR_EATEN issue would fix this too
-                # elif key in SAVE:
-                #     save(overlay_board)
-
-                elif key in LOAD:
-                    load()
-                    selection = (0, 0)
-                    to = (0, 0)
-                    old = " "
-                    old_selection = selection
-                    old_to = to
-                    set_number = 0
-                    confirm_fr = False
-                    confirm_to = False
-                    # TODO: Don't use break here
-                    break
-
-                clear()
-
-        if confirm_fr and confirm_to:
-            old_selection = selection
-            old_to = to
-            board[(selection[1] + to[1]) // 2][(selection[0] + to[0]) // 2] = CHR_EATEN
-            board[selection[1]][selection[0]] = CHR_HOLE
-            board[to[1]][to[0]] = CHR_SELECTION
-            overlay_board[(selection[1] + to[1]) // 2][
-                (selection[0] + to[0]) // 2
-            ] = CHR_EATEN
-            overlay_board[selection[1]][selection[0]] = CHR_HOLE
-            overlay_board[to[1]][to[0]] = CHR_PEG
-            confirm_fr, confirm_to = False, False
-            selection = to
-            old = CHR_PEG
-            set_number += 1
-
-
-if __name__ == "__main__":
-    main()
+    if confirm_fr and confirm_to:
+        old_selection = selection
+        old_to = to
+        board[(selection[1] + to[1]) // 2][(selection[0] + to[0]) // 2] = CHR_EATEN
+        board[selection[1]][selection[0]] = CHR_HOLE
+        board[to[1]][to[0]] = CHR_SELECTION
+        overlay_board[(selection[1] + to[1]) // 2][
+            (selection[0] + to[0]) // 2
+        ] = CHR_EATEN
+        overlay_board[selection[1]][selection[0]] = CHR_HOLE
+        overlay_board[to[1]][to[0]] = CHR_PEG
+        confirm_fr, confirm_to = False, False
+        selection = to
+        old = CHR_PEG
+        set_number += 1
