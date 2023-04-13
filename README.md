@@ -8,8 +8,8 @@ A game of peg solitaire in the terminal, written in python
 - Select "to" with the arrow keys or hjkl, confirm with enter or space
 - Quit anytime with escape, q or m
 - You can switch between the European and the English version by switching a boolean in the code, a custom board is also possible.
-- You can save a game with s or J, you can't save a game after selecting a peg, for technical reasons (I suck a programming)
-- You can load a game with L
+- You can save a game with s or J, you can't save a game after selecting a peg, for technical reasons (I suck a programming), you can cancel saving by inputting a blank file
+- You can load a game with L, you can cancel loading by inputting a blank file
 - All the keybinds are easily configurable in the code
 
 <br>
@@ -37,4 +37,4 @@ Screenshot:
 
 TODO: `grep "TODO" peg_solitaire.py`
 
-Thank you to [u/RiceKrispyPooHead](https://www.reddit.com/user/RiceKrispyPooHead/) for their help!
+Thank you to [u/RiceKrispyPooHead](https://www.reddit.com/user/RiceKrispyPooHead/) and [mason1920](https://github.com/mason1920) for their help!

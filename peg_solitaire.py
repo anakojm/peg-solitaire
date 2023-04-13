@@ -8,10 +8,9 @@ over another one, "eating" it in the process. The destination must be empty.
 and o indicates an empty hole. A blue ¤ is the hole the current peg moved from;
 a red * is the final position of that peg,
 a red o is the hole of the peg that was jumped and removed.
-TODO: Use curses
+TODO: Remove dependencies
 TODO: add type hints
 TODO: use wikipedia's syntax to input moves
-TODO: implement a cancel feature during save/load
 """
 import os
 import sys
@@ -40,13 +39,13 @@ CHR_EMPTY = " "
 CHR_PEG = "·"
 CHR_SELECTION = "\x1b[1m*\x1b[0m"  # bold
 CHR_HOLE = "o"
-CHR_FR = "\x1b[94m¤\x1b[0m"  # blue
+CHR_FROM = "\x1b[94m¤\x1b[0m"  # blue
 CHR_TO = "\x1b[1m\x1b[91m*\x1b[0m"  # bold red
 CHR_EATEN = "\x1b[91mo\x1b[0m"  # red
 
 # See https://en.wikipedia.org/wiki/Peg_solitaire#Solutions_to_the_English_game
 MIN_LEGAL_MOVES = 18
-CAN_JUMP_OVER = [CHR_FR, CHR_HOLE, CHR_EATEN]
+CAN_JUMP_OVER = [CHR_FROM, CHR_HOLE, CHR_EATEN]
 
 # The code is flexible enough that you should be able to use any board
 if ENGLISH:
@@ -161,13 +160,12 @@ def quit_game():
 
 def legal(selection, to):
     """
-    Checks for legality of a move (if it is 3 stone long, counting from 0,
-    using the Pythagorean theorem, stay in school kids, it make you better at
-    pvp
-    TODO: find and fix legal edge cases
+    Checks for legality of a move (if it is 0 or 3 stone long using the 
+    Pythagorean theorem, stay in school kids, it make you better at pvp).
+    also checks if we are jumping over a peg or ourselves
     """
-    if sqrt((selection[1] - to[1])**2 + (selection[0] - to[0])**2) != 2 or\
-            board[(selection[1] + to[1]) // 2][(selection[0] + to[0]) // 2] != CHR_PEG:
+    if sqrt((selection[1] - to[1])**2 + (selection[0] - to[0])**2) not in [2, 0] or\
+            board[(selection[1] + to[1]) // 2][(selection[0] + to[0]) // 2] not in [CHR_PEG, CHR_TO]:
         return False
     return True
 
@@ -175,11 +173,14 @@ def legal(selection, to):
 def save(overlay_board):
     """
     Save the current game to a specified file
-    TODO: fix load bug that lead to multiple CHR_EATEN by properly exporting all variables, don't forget to change CAN_JUMP_OVER after
+    TODO: fix load bug that lead to multiple CHR_EATEN by properly exporting
+    all variables, don't forget to change CAN_JUMP_OVER after
     """
     print('\x1b[?25h', end="")  # shows the cursor
-    print("We are in", os.getcwd())
-    filename = input(">>>")
+    print(os.getcwd(), end="")
+    filename = input("/")
+    if filename == "":
+        return
     file = open(filename, "w")
     file.write(str(overlay_board))
     file.close()
@@ -189,8 +190,10 @@ def load():
     """Load a game"""
     global CHR_SELECTION, board, overlay_board
     print('\x1b[?25h', end="")  # shows the cursor
-    print("We are in", os.getcwd())
-    filename = input(">>>")
+    print(os.getcwd(), end="")
+    filename = input("/")
+    if filename == "":
+        return
     file = open(filename, "r")
     overlay_board = file.read()
     file.close()
@@ -206,13 +209,14 @@ old = " "
 old_selection = selection
 old_to = to
 set_number = 0
-confirm_fr = False
+confirm_from = False
 confirm_to = False
 clear()
+# TODO: break down in smaller Functions
 while True:
     check_winned(set_number)
 
-    while not confirm_fr:
+    while not confirm_from:
         show_board()
         key = getkey()
 
@@ -241,7 +245,7 @@ while True:
             board[selection[1]][selection[0]] = CHR_SELECTION
 
         elif key in CONFIRM and old == CHR_PEG:
-            confirm_fr, confirm_to = True, False
+            confirm_from, confirm_to = True, False
             if set_number > 0:
                 overlay_board[(old_selection[1] + old_to[1]) // 2][
                     (old_selection[0] + old_to[0]) // 2
@@ -262,15 +266,15 @@ while True:
             old_selection = selection
             old_to = to
             set_number = 0
-            confirm_fr = False
+            confirm_from = False
             confirm_to = False
 
         clear()
 
-    if confirm_fr:
+    if confirm_from:
         board[selection[1]][selection[0]] = CHR_TO
-        overlay_board[selection[1]][selection[0]] = CHR_FR
-        old = CHR_FR
+        overlay_board[selection[1]][selection[0]] = CHR_FROM
+        old = CHR_FROM
         to = selection
         while not confirm_to:
             show_board()
@@ -300,24 +304,14 @@ while True:
                 to = (to[0] + 1) % len(board), to[1]
                 board[to[1]][to[0]] = CHR_TO
 
-            elif key in CONFIRM and old in CAN_JUMP_OVER:
-                if old == CHR_FR:
+            elif key in CONFIRM and old in CAN_JUMP_OVER and legal(selection, to):
+                if old == CHR_FROM:
                     overlay_board[selection[1]][selection[0]] = CHR_PEG
                     board[selection[1]][selection[0]] = CHR_SELECTION
                     old = CHR_PEG
-                    confirm_fr, confirm_to = False, False
+                    confirm_from, confirm_to = False, False
                     clear()
-                    # TODO: Don't use break to cancel
-                    break
-                elif not legal(selection, to):
-                    overlay_board[selection[1]][selection[0]] = CHR_PEG
-                    board[selection[1]][selection[0]] = CHR_SELECTION
-                    overlay_board[to[1]][to[0]] = old
-                    board[to[1]][to[0]] = old
-                    old = CHR_PEG
-                    confirm_fr, confirm_to = False, False
-                    clear()
-                    # TODO: Don't use break to cancel
+                    # TODO: Don't use break to cancel to selection
                     break
                 else:
                     confirm_to = True
@@ -337,14 +331,14 @@ while True:
                 old_selection = selection
                 old_to = to
                 set_number = 0
-                confirm_fr = False
+                confirm_from = False
                 confirm_to = False
-                # TODO: Don't use break here
+                # TODO: Don't use break after load
                 break
 
             clear()
 
-    if confirm_fr and confirm_to:
+    if confirm_from and confirm_to:
         old_selection = selection
         old_to = to
         board[(selection[1] + to[1]) // 2][(selection[0] + to[0]) // 2] = CHR_EATEN
@@ -355,7 +349,7 @@ while True:
         ] = CHR_EATEN
         overlay_board[selection[1]][selection[0]] = CHR_HOLE
         overlay_board[to[1]][to[0]] = CHR_PEG
-        confirm_fr, confirm_to = False, False
+        confirm_from, confirm_to = False, False
         selection = to
         old = CHR_PEG
         set_number += 1
