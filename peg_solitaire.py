@@ -15,6 +15,7 @@ TODO: use wikipedia's syntax to input moves
 import os
 import sys
 import ast
+from enum import IntEnum
 from math import sqrt
 from getkey import getkey, keys
 
@@ -34,14 +35,23 @@ QUIT = ["q", "m", keys.ESCAPE]
 SAVE = ["s", "J"]
 LOAD = ["L"]
 
+class CharacterAttribute(IntEnum):
+    NORMAL = 0
+    BOLD = 1
+    RED = 91
+    BLUE = 94
+
+def character_attributes(*attributes):
+    return f"\033[{';'.join(str(int(attribute)) for attribute in attributes)}m"
+
 # UI elements
 CHR_EMPTY = " "
 CHR_PEG = "·"
-CHR_SELECTION = "\x1b[1m*\x1b[0m"  # bold
+CHR_SELECTION = f"{character_attributes(CharacterAttribute.BOLD)}*{character_attributes(CharacterAttribute.NORMAL)}"
 CHR_HOLE = "o"
-CHR_FROM = "\x1b[94m¤\x1b[0m"  # blue
-CHR_TO = "\x1b[1m\x1b[91m*\x1b[0m"  # bold red
-CHR_EATEN = "\x1b[91mo\x1b[0m"  # red
+CHR_FROM = f"{character_attributes(CharacterAttribute.BLUE)}¤{character_attributes(CharacterAttribute.NORMAL)}"
+CHR_TO = f"{character_attributes(CharacterAttribute.BOLD, CharacterAttribute.RED)}*{character_attributes(CharacterAttribute.NORMAL)}"
+CHR_EATEN = f"{character_attributes(CharacterAttribute.RED)}o{character_attributes(CharacterAttribute.NORMAL)}"
 
 # See https://en.wikipedia.org/wiki/Peg_solitaire#Solutions_to_the_English_game
 MIN_LEGAL_MOVES = 18
@@ -102,6 +112,26 @@ elif EUROPEAN:
     # No win_position, you win if there is one peg remaining
 
 
+class DECMode(IntEnum):
+    CURSOR = 25
+
+
+def dec_mode_set(mode):
+    return f"\033[?{mode}h"
+
+
+def dec_mode_reset(mode):
+    return f"\033[?{mode}l"
+
+
+def cursor_show():
+    print(dec_mode_set(DECMode.CURSOR), end="", flush=True)
+
+
+def cursor_hide():
+    print(dec_mode_reset(DECMode.CURSOR), end="", flush=True)
+
+
 def clear():
     """Clears the screen"""
     if os.name == "nt":
@@ -112,7 +142,7 @@ def clear():
 
 def show_board():
     """Shows the board"""
-    print('\033[?25l', end="")  # hides the cursor
+    cursor_hide()
     for row in board:
         for col in row:
             print(col, end=" ")
@@ -138,23 +168,23 @@ def quit_winned(set_number):
     """Function that is called upon winning the game"""
     if set_number < MIN_LEGAL_MOVES:
         print("CHEATER")
-        print('\x1b[?25h', end="")  # shows the cursor
+        cursor_show()
         sys.exit(1)
     elif set_number == MIN_LEGAL_MOVES:
         print("NERD <3!")
-        print('\x1b[?25h', end="")  # shows the cursor
+        cursor_show()
         sys.exit(0)
     else:
         print("GG!")
         print("In", set_number, "moves!")
-        print('\x1b[?25h')  # shows the cursor
+        cursor_show()
         sys.exit(0)
 
 
 def quit_game():
     """Function that is called upon pressing an element of the QUIT list"""
     clear()
-    print('\x1b[?25h', end="")  # shows the cursor
+    cursor_show()
     sys.exit(0)
 
 
@@ -176,7 +206,7 @@ def save(overlay_board):
     TODO: fix load bug that lead to multiple CHR_EATEN by properly exporting
     all variables, don't forget to change CAN_JUMP_OVER after
     """
-    print('\x1b[?25h', end="")  # shows the cursor
+    cursor_show()
     print(os.getcwd(), end="")
     filename = input("/")
     if filename == "":
@@ -189,7 +219,7 @@ def save(overlay_board):
 def load():
     """Load a game"""
     global CHR_SELECTION, board, overlay_board
-    print('\x1b[?25h', end="")  # shows the cursor
+    cursor_show()
     print(os.getcwd(), end="")
     filename = input("/")
     if filename == "":
