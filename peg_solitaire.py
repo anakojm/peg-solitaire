@@ -58,38 +58,49 @@ CHR_EATEN = f"{character_attributes(CharacterAttribute.RED)}o{character_attribut
 MIN_LEGAL_MOVES = 18
 CAN_JUMP_OVER = [CHR_FROM, CHR_HOLE, CHR_EATEN]
 
+def str_to_board(string):
+    tiles = {
+        " ": CHR_EMPTY,
+        "0": CHR_HOLE,
+        "1": CHR_PEG,
+        "2": CHR_SELECTION,
+    }
+    return [[tiles[character] for character in line] for line in string.splitlines()]
+
 # The code is flexible enough that you should be able to use any board
 if ENGLISH:
-    overlay_board = [
-        [CHR_EMPTY, CHR_EMPTY, CHR_PEG, CHR_PEG, CHR_PEG, CHR_EMPTY, CHR_EMPTY],
-        [CHR_EMPTY, CHR_EMPTY, CHR_PEG, CHR_PEG, CHR_PEG, CHR_EMPTY, CHR_EMPTY],
-        [CHR_PEG, CHR_PEG, CHR_PEG, CHR_PEG, CHR_PEG, CHR_PEG, CHR_PEG],
-        [CHR_PEG, CHR_PEG, CHR_PEG, CHR_HOLE, CHR_PEG, CHR_PEG, CHR_PEG],
-        [CHR_PEG, CHR_PEG, CHR_PEG, CHR_PEG, CHR_PEG, CHR_PEG, CHR_PEG],
-        [CHR_EMPTY, CHR_EMPTY, CHR_PEG, CHR_PEG, CHR_PEG, CHR_EMPTY, CHR_EMPTY],
-        [CHR_EMPTY, CHR_EMPTY, CHR_PEG, CHR_PEG, CHR_PEG, CHR_EMPTY, CHR_EMPTY],
-    ]
-
-    win_position = [
-        [CHR_EMPTY, CHR_EMPTY, CHR_HOLE, CHR_HOLE, CHR_HOLE, CHR_EMPTY, CHR_EMPTY],
-        [CHR_EMPTY, CHR_EMPTY, CHR_HOLE, CHR_HOLE, CHR_HOLE, CHR_EMPTY, CHR_EMPTY],
-        [CHR_HOLE, CHR_HOLE, CHR_HOLE, CHR_HOLE, CHR_HOLE, CHR_HOLE, CHR_HOLE],
-        [CHR_HOLE, CHR_HOLE, CHR_HOLE, CHR_PEG, CHR_HOLE, CHR_HOLE, CHR_HOLE],
-        [CHR_HOLE, CHR_HOLE, CHR_HOLE, CHR_HOLE, CHR_HOLE, CHR_HOLE, CHR_HOLE],
-        [CHR_EMPTY, CHR_EMPTY, CHR_HOLE, CHR_HOLE, CHR_HOLE, CHR_EMPTY, CHR_EMPTY],
-        [CHR_EMPTY, CHR_EMPTY, CHR_HOLE, CHR_HOLE, CHR_HOLE, CHR_EMPTY, CHR_EMPTY],
-    ]
+    overlay_board = str_to_board(
+"""\
+  111  
+  111  
+1111111
+1110111
+1111111
+  111  
+  111  \
+""")
+    win_position = str_to_board(
+"""\
+  000  
+  000  
+0000000
+0001000
+0000000
+  000  
+  000  \
+""")
 # European version:
 elif EUROPEAN:
-    overlay_board = [
-        [CHR_EMPTY, CHR_EMPTY, CHR_PEG, CHR_PEG, CHR_PEG, CHR_EMPTY, CHR_EMPTY],
-        [CHR_EMPTY, CHR_PEG, CHR_PEG, CHR_PEG, CHR_PEG, CHR_PEG, CHR_EMPTY],
-        [CHR_PEG, CHR_PEG, CHR_PEG, CHR_PEG, CHR_PEG, CHR_PEG, CHR_PEG],
-        [CHR_PEG, CHR_PEG, CHR_PEG, CHR_HOLE, CHR_PEG, CHR_PEG, CHR_PEG],
-        [CHR_PEG, CHR_PEG, CHR_PEG, CHR_PEG, CHR_PEG, CHR_PEG, CHR_PEG],
-        [CHR_EMPTY, CHR_PEG, CHR_PEG, CHR_PEG, CHR_PEG, CHR_PEG, CHR_EMPTY],
-        [CHR_EMPTY, CHR_EMPTY, CHR_PEG, CHR_PEG, CHR_PEG, CHR_EMPTY, CHR_EMPTY],
-    ]
+    overlay_board = str_to_board(
+"""\
+  111  
+ 11111 
+1111111
+1110111
+1111111
+ 11111 
+  111  \
+""")
     # No win_position, you win if there is one peg remaining
 
 board = overlay_board
