@@ -15,6 +15,7 @@ TODO: use wikipedia's syntax to input moves
 import os
 import sys
 import ast
+import atexit
 from enum import IntEnum
 from math import sqrt
 from getkey import getkey, keys
@@ -165,7 +166,6 @@ def check_winned():
 def quit_game():
     """Function that is called upon pressing an element of the QUIT list"""
     clear()
-    cursor_show()
     sys.exit(0)
 
 
@@ -210,6 +210,7 @@ def load():
     board[0][0] = CHR_SELECTION
     overlay_board = ast.literal_eval(overlay_board)
 
+atexit.register(cursor_show)
 
 selection = (0, 0)
 to = (0, 0)
@@ -223,7 +224,6 @@ clear()
 # TODO: break down in smaller Functions
 while True:
     if check_winned():
-        cursor_show()
         if set_number < MIN_LEGAL_MOVES:
             print("CHEATER")
         elif set_number == MIN_LEGAL_MOVES:
