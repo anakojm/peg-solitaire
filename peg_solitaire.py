@@ -190,7 +190,7 @@ def save(overlay_board):
 
 def load():
     """Load a game"""
-    global CHR_SELECTION, board, overlay_board
+    global board, overlay_board
     cursor_show()
     print(os.getcwd(), end="")
     filename = input("/")
