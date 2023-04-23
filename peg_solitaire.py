@@ -45,24 +45,25 @@ def character_attributes(*attributes):
     return f"\033[{';'.join(str(attribute) for attribute in attributes)}m"
 
 # UI elements
-CHR_EMPTY = " "
-CHR_PEG = "·"
-CHR_SELECTION = f"{character_attributes(CharacterAttribute.BOLD)}*{character_attributes(CharacterAttribute.NORMAL)}"
-CHR_HOLE = "o"
-CHR_FROM = f"{character_attributes(CharacterAttribute.BLUE)}¤{character_attributes(CharacterAttribute.NORMAL)}"
-CHR_TO = f"{character_attributes(CharacterAttribute.BOLD, CharacterAttribute.RED)}*{character_attributes(CharacterAttribute.NORMAL)}"
-CHR_EATEN = f"{character_attributes(CharacterAttribute.RED)}o{character_attributes(CharacterAttribute.NORMAL)}"
+class Tile:
+    EMPTY = " "
+    PEG = "·"
+    SELECTION = f"{character_attributes(CharacterAttribute.BOLD)}*{character_attributes(CharacterAttribute.NORMAL)}"
+    HOLE = "o"
+    FROM = f"{character_attributes(CharacterAttribute.BLUE)}¤{character_attributes(CharacterAttribute.NORMAL)}"
+    TO = f"{character_attributes(CharacterAttribute.BOLD, CharacterAttribute.RED)}*{character_attributes(CharacterAttribute.NORMAL)}"
+    EATEN = f"{character_attributes(CharacterAttribute.RED)}o{character_attributes(CharacterAttribute.NORMAL)}"
 
 # See https://en.wikipedia.org/wiki/Peg_solitaire#Solutions_to_the_English_game
 MIN_LEGAL_MOVES = 18
-CAN_JUMP_OVER = [CHR_FROM, CHR_HOLE, CHR_EATEN]
+CAN_JUMP_OVER = [Tile.FROM, Tile.HOLE, Tile.EATEN]
 
 def str_to_board(string):
     tiles = {
-        " ": CHR_EMPTY,
-        "0": CHR_HOLE,
-        "1": CHR_PEG,
-        "2": CHR_SELECTION,
+        " ": Tile.EMPTY,
+        "0": Tile.HOLE,
+        "1": Tile.PEG,
+        "2": Tile.SELECTION,
     }
     return [[tiles[character] for character in line] for line in string.splitlines()]
 
@@ -103,7 +104,7 @@ elif EUROPEAN:
     # No win_position, you win if there is one peg remaining
 
 board = overlay_board
-board[0][0] = CHR_SELECTION
+board[0][0] = Tile.SELECTION
 
 
 class DECMode:
@@ -149,7 +150,7 @@ def check_winned():
         l_win = 0
         for row in overlay_board:
             for col in row:
-                if col == CHR_PEG:
+                if col == Tile.PEG:
                     l_win += 1
         return l_win == 1
     elif ENGLISH:
@@ -168,13 +169,13 @@ def legal(selection, to):
     Pythagorean theorem, stay in school kids, it make you better at pvp).
     also checks if we are jumping over a peg or ourselves
     """
-    return not (sqrt((selection[1] - to[1])**2 + (selection[0] - to[0])**2) not in [2, 0] or board[(selection[1] + to[1]) // 2][(selection[0] + to[0]) // 2] not in [CHR_PEG, CHR_TO])
+    return not (sqrt((selection[1] - to[1])**2 + (selection[0] - to[0])**2) not in [2, 0] or board[(selection[1] + to[1]) // 2][(selection[0] + to[0]) // 2] not in [Tile.PEG, Tile.TO])
 
 
 def save(overlay_board):
     """
     Save the current game to a specified file
-    TODO: fix load bug that lead to multiple CHR_EATEN by properly exporting
+    TODO: fix load bug that lead to multiple Tile.EATEN by properly exporting
     all variables, don't forget to change CAN_JUMP_OVER after
     """
     cursor_show()
@@ -201,7 +202,7 @@ def load():
     file.close()
     board = overlay_board[:]
     board = ast.literal_eval(board)
-    board[0][0] = CHR_SELECTION
+    board[0][0] = Tile.SELECTION
     overlay_board = ast.literal_eval(overlay_board)
     cursor_hide()
 
@@ -238,33 +239,33 @@ while True:
             board[selection[1]][selection[0]] = old
             old = overlay_board[selection[1]][(selection[0] - 1) % len(board)]
             selection = (selection[0] - 1) % len(board), selection[1]
-            board[selection[1]][selection[0]] = CHR_SELECTION
+            board[selection[1]][selection[0]] = Tile.SELECTION
 
         elif key in JUMP_DOWN:
             board[selection[1]][selection[0]] = old
             old = overlay_board[(selection[1] + 1) % len(board)][selection[0]]
             selection = selection[0], (selection[1] + 1) % len(board)
-            board[selection[1]][selection[0]] = CHR_SELECTION
+            board[selection[1]][selection[0]] = Tile.SELECTION
 
         elif key in JUMP_UP:
             board[selection[1]][selection[0]] = old
             old = overlay_board[(selection[1] - 1) % len(board)][selection[0]]
             selection = selection[0], (selection[1] - 1) % len(board)
-            board[selection[1]][selection[0]] = CHR_SELECTION
+            board[selection[1]][selection[0]] = Tile.SELECTION
 
         elif key in JUMP_RIGHT:
             board[selection[1]][selection[0]] = old
             old = overlay_board[selection[1]][(selection[0] + 1) % len(board)]
             selection = (selection[0] + 1) % len(board), selection[1]
-            board[selection[1]][selection[0]] = CHR_SELECTION
+            board[selection[1]][selection[0]] = Tile.SELECTION
 
-        elif key in CONFIRM and old == CHR_PEG:
+        elif key in CONFIRM and old == Tile.PEG:
             confirm_from, confirm_to = True, False
             if set_number > 0:
                 overlay_board[(old_selection[1] + old_to[1]) // 2][
                     (old_selection[0] + old_to[0]) // 2
-                ] = CHR_HOLE
-                board[(old_selection[1] + old_to[1]) // 2][(old_selection[0] + old_to[0]) // 2] = CHR_HOLE
+                ] = Tile.HOLE
+                board[(old_selection[1] + old_to[1]) // 2][(old_selection[0] + old_to[0]) // 2] = Tile.HOLE
 
         elif key in QUIT:
             quit_game()
@@ -283,9 +284,9 @@ while True:
             confirm_from = False
             confirm_to = False
 
-    board[selection[1]][selection[0]] = CHR_TO
-    overlay_board[selection[1]][selection[0]] = CHR_FROM
-    old = CHR_FROM
+    board[selection[1]][selection[0]] = Tile.TO
+    overlay_board[selection[1]][selection[0]] = Tile.FROM
+    old = Tile.FROM
     to = selection
     while not confirm_to:
         show_board()
@@ -295,32 +296,33 @@ while True:
             board[to[1]][to[0]] = old
             old = overlay_board[to[1]][(to[0] - 1) % len(board)]
             to = (to[0] - 1) % len(board), to[1]
-            board[to[1]][to[0]] = CHR_TO
+            board[to[1]][to[0]] = Tile.TO
 
         elif key in JUMP_DOWN:
             board[to[1]][to[0]] = old
             old = overlay_board[(to[1] + 1) % len(board)][to[0]]
             to = to[0], (to[1] + 1) % len(board)
-            board[to[1]][to[0]] = CHR_TO
+            board[to[1]][to[0]] = Tile.TO
 
         elif key in JUMP_UP:
             board[to[1]][to[0]] = old
             old = overlay_board[(to[1] - 1) % len(board)][to[0]]
             to = to[0], (to[1] - 1) % len(board)
-            board[to[1]][to[0]] = CHR_TO
+            board[to[1]][to[0]] = Tile.TO
 
         elif key in JUMP_RIGHT:
             board[to[1]][to[0]] = old
             old = overlay_board[to[1]][(to[0] + 1) % len(board)]
             to = (to[0] + 1) % len(board), to[1]
-            board[to[1]][to[0]] = CHR_TO
+            board[to[1]][to[0]] = Tile.TO
 
         elif key in CONFIRM and old in CAN_JUMP_OVER and legal(selection, to):
-            if old == CHR_FROM:
-                overlay_board[selection[1]][selection[0]] = CHR_PEG
-                board[selection[1]][selection[0]] = CHR_SELECTION
-                old = CHR_PEG
-                confirm_from, confirm_to = False, False
+            if old == Tile.FROM:
+                overlay_board[selection[1]][selection[0]] = Tile.PEG
+                board[selection[1]][selection[0]] = Tile.SELECTION
+                old = Tile.PEG
+                confirm_from = False
+                confirm_to = False
                 # TODO: Don't use break to cancel to selection
                 break
             else:
@@ -329,7 +331,7 @@ while True:
         elif key in QUIT:
             quit_game()
 
-        # fixing CHR_EATEN issue would fix this too
+        # fixing Tile.EATEN issue would fix this too
         # elif key in SAVE:
         #     save(overlay_board)
 
@@ -349,14 +351,14 @@ while True:
     if confirm_to:
         old_selection = selection
         old_to = to
-        board[(selection[1] + to[1]) // 2][(selection[0] + to[0]) // 2] = CHR_EATEN
-        board[selection[1]][selection[0]] = CHR_HOLE
-        board[to[1]][to[0]] = CHR_SELECTION
-        overlay_board[(selection[1] + to[1]) // 2][(selection[0] + to[0]) // 2] = CHR_EATEN
-        overlay_board[selection[1]][selection[0]] = CHR_HOLE
-        overlay_board[to[1]][to[0]] = CHR_PEG
+        board[(selection[1] + to[1]) // 2][(selection[0] + to[0]) // 2] = Tile.EATEN
+        board[selection[1]][selection[0]] = Tile.HOLE
+        board[to[1]][to[0]] = Tile.SELECTION
+        overlay_board[(selection[1] + to[1]) // 2][(selection[0] + to[0]) // 2] = Tile.EATEN
+        overlay_board[selection[1]][selection[0]] = Tile.HOLE
+        overlay_board[to[1]][to[0]] = Tile.PEG
         confirm_from = False
         confirm_to = False
         selection = to
-        old = CHR_PEG
+        old = Tile.PEG
         set_number += 1
