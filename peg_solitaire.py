@@ -16,7 +16,6 @@ import os
 import sys
 import ast
 import atexit
-from enum import IntEnum
 from math import sqrt
 from getkey import getkey, keys
 
@@ -36,14 +35,14 @@ QUIT = ["q", "m", keys.ESCAPE]
 SAVE = ["s", "J"]
 LOAD = ["L"]
 
-class CharacterAttribute(IntEnum):
+class CharacterAttribute:
     NORMAL = 0
     BOLD = 1
     RED = 91
     BLUE = 94
 
 def character_attributes(*attributes):
-    return f"\033[{';'.join(str(int(attribute)) for attribute in attributes)}m"
+    return f"\033[{';'.join(str(attribute) for attribute in attributes)}m"
 
 # UI elements
 CHR_EMPTY = " "
@@ -107,7 +106,7 @@ board = overlay_board
 board[0][0] = CHR_SELECTION
 
 
-class DECMode(IntEnum):
+class DECMode:
     CURSOR = 25
 
 
