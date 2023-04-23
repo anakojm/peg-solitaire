@@ -137,6 +137,7 @@ def clear():
 
 def show_board():
     """Shows the board"""
+    clear()
     for row in board:
         for col in row:
             print(col, end=" ")
@@ -217,10 +218,10 @@ old_to = to
 set_number = 0
 confirm_from = False
 confirm_to = False
-clear()
 # TODO: break down in smaller Functions
 while True:
     if check_winned():
+        clear()
         if set_number < MIN_LEGAL_MOVES:
             print("CHEATER")
         elif set_number == MIN_LEGAL_MOVES:
@@ -283,8 +284,6 @@ while True:
             confirm_from = False
             confirm_to = False
 
-        clear()
-
     board[selection[1]][selection[0]] = CHR_TO
     overlay_board[selection[1]][selection[0]] = CHR_FROM
     old = CHR_FROM
@@ -323,7 +322,6 @@ while True:
                 board[selection[1]][selection[0]] = CHR_SELECTION
                 old = CHR_PEG
                 confirm_from, confirm_to = False, False
-                clear()
                 # TODO: Don't use break to cancel to selection
                 break
             else:
@@ -348,8 +346,6 @@ while True:
             confirm_to = False
             # TODO: Don't use break after load
             break
-
-        clear()
 
     if confirm_to:
         old_selection = selection
