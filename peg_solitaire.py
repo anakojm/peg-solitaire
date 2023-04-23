@@ -137,7 +137,6 @@ def clear():
 
 def show_board():
     """Shows the board"""
-    cursor_hide()
     for row in board:
         for col in row:
             print(col, end=" ")
@@ -186,6 +185,7 @@ def save(overlay_board):
     file = open(filename, "w")
     file.write(str(overlay_board))
     file.close()
+    cursor_hide()
 
 
 def load():
@@ -203,8 +203,11 @@ def load():
     board = ast.literal_eval(board)
     board[0][0] = CHR_SELECTION
     overlay_board = ast.literal_eval(overlay_board)
+    cursor_hide()
 
 atexit.register(cursor_show)
+
+cursor_hide()
 
 selection = (0, 0)
 to = (0, 0)
