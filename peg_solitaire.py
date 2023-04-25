@@ -12,28 +12,153 @@ TODO: Remove dependencies
 TODO: add type hints
 TODO: use wikipedia's syntax to input moves
 """
-import os
-import sys
-import ast
 import atexit
-from math import sqrt
+from os import name, system, getcwd
+from pickle import Pickler, Unpickler
+from typing import NamedTuple, Callable
+from copy import deepcopy
+from enum import Enum, auto
 from getkey import getkey, keys
 
-# Settings:
-EUROPEAN = False
-ENGLISH = True
-# EUROPEAN = True
-# ENGLISH = False
 
-# Keybinds
-JUMP_LEFT = ["h", keys.LEFT]
-JUMP_DOWN = ["j", keys.DOWN]
-JUMP_UP = ["k", keys.UP]
-JUMP_RIGHT = ["l", keys.RIGHT]
-CONFIRM = [keys.ENTER, keys.SPACE]
-QUIT = ["q", "m", keys.ESCAPE]
-SAVE = ["s", "J"]
-LOAD = ["L"]
+
+class Action(Enum):
+    SELECT = auto()
+    LEFT = auto()
+    DOWN = auto()
+    UP = auto()
+    RIGHT = auto()
+    SAVE = auto()
+    LOAD = auto()
+    QUIT = auto()
+
+BINDS = {
+    keys.ENTER: Action.SELECT,
+    keys.SPACE: Action.SELECT,
+
+    keys.LEFT: Action.LEFT,
+    keys.DOWN: Action.DOWN,
+    keys.UP: Action.UP,
+    keys.RIGHT: Action.RIGHT,
+
+    "h": Action.LEFT,
+    "j": Action.DOWN,
+    "k": Action.UP,
+    "l": Action.RIGHT,
+
+    keys.ESCAPE: Action.QUIT,
+    "q": Action.QUIT,
+    "m": Action.QUIT,
+
+    "s": Action.SAVE,
+    "J": Action.SAVE,
+
+    "L": Action.LOAD,
+}
+
+
+
+class Tile(Enum):
+    HOLE = auto()
+    PEG = auto()
+
+class Board(NamedTuple):
+    tiles: list
+    width: int
+
+class Game(NamedTuple):
+    board: Board
+    won: Callable
+    minimum_moves: int
+
+
+
+def str_to_tile(str):
+    return {
+        " ": None,
+        "0": Tile.HOLE,
+        "1": Tile.PEG,
+    }[str]
+
+
+
+def pad_right(list, length, element):
+    return list + [element] * (length - len(list))
+
+def str_to_board(str):
+    lines = str.splitlines()
+
+    tiles = []
+    width = max([len(line) for line in lines])
+
+    for line in lines:
+        tiles += pad_right([str_to_tile(char) for char in line], width, None)
+
+    return Board(tiles, width)
+
+
+
+def last_peg(board):
+    index = board.tiles.index(Tile.PEG)
+    return not Tile.PEG in board.tiles[index+1:] and index
+
+
+
+ENGLISH = Game(
+    str_to_board("""\
+  111
+  111
+1111111
+1110111
+1111111
+  111
+  111\
+"""),
+    lambda self, board: board == str_to_board("""\
+  000
+  000
+0000000
+0001000
+0000000
+  000
+  000\
+"""),
+    18,
+)
+
+EUROPEAN = Game(
+    str_to_board("""\
+  111
+ 11111
+1111111
+1110111
+1111111
+ 11111
+  111\
+"""),
+    lambda self, board: board.width == self.board.width and last_peg(board),
+    18,
+)
+
+DEBUG = Game(
+    str_to_board("""\
+11000
+111111111
+11100
+00000
+          11
+          11\
+"""),
+    lambda self, board: board.tiles.count(Tile.PEG) < self.board.tiles.count(Tile.PEG),
+    1,
+)
+
+
+CLEAR = "cls" if name == "nt" else "clear"
+
+def clear():
+    """Clears the screen"""
+    system(CLEAR)
 
 class CharacterAttribute:
     NORMAL = 0
@@ -44,321 +169,209 @@ class CharacterAttribute:
 def character_attributes(*attributes):
     return f"\033[{';'.join(str(attribute) for attribute in attributes)}m"
 
-# UI elements
-class Tile:
-    EMPTY = " "
-    PEG = "·"
-    SELECTION = f"{character_attributes(CharacterAttribute.BOLD)}*{character_attributes(CharacterAttribute.NORMAL)}"
+
+
+class Element:
+    NONE = " "
     HOLE = "o"
-    FROM = f"{character_attributes(CharacterAttribute.BLUE)}¤{character_attributes(CharacterAttribute.NORMAL)}"
-    TO = f"{character_attributes(CharacterAttribute.BOLD, CharacterAttribute.RED)}*{character_attributes(CharacterAttribute.NORMAL)}"
-    EATEN = f"{character_attributes(CharacterAttribute.RED)}o{character_attributes(CharacterAttribute.NORMAL)}"
+    PEG = "·"
+    CURSOR = "*"
 
-# See https://en.wikipedia.org/wiki/Peg_solitaire#Solutions_to_the_English_game
-MIN_LEGAL_MOVES = 18
-CAN_JUMP_OVER = [Tile.FROM, Tile.HOLE, Tile.EATEN]
+class Style:
+    NORMAL = character_attributes(CharacterAttribute.NORMAL)
+    CURSOR = character_attributes(CharacterAttribute.BOLD)
+    CURSOR_SELECTED = character_attributes(CharacterAttribute.BOLD, CharacterAttribute.RED)
+    JUMPED = character_attributes(CharacterAttribute.NORMAL, CharacterAttribute.RED)
 
-def str_to_board(string):
-    tiles = {
-        " ": Tile.EMPTY,
-        "0": Tile.HOLE,
-        "1": Tile.PEG,
-        "2": Tile.SELECTION,
-    }
-    return [[tiles[character] for character in line] for line in string.splitlines()]
+def display(board, cursor, selected, jumped):
+    clear()
+    index = 0
 
-# The code is flexible enough that you should be able to use any board
-if ENGLISH:
-    overlay_board = str_to_board(
-"""\
-  111  
-  111  
-1111111
-1110111
-1111111
-  111  
-  111  \
-""")
-    win_position = str_to_board(
-"""\
-  000  
-  000  
-0000000
-0001000
-0000000
-  000  
-  000  \
-""")
-# European version:
-elif EUROPEAN:
-    overlay_board = str_to_board(
-"""\
-  111  
- 11111 
-1111111
-1110111
-1111111
- 11111 
-  111  \
-""")
-    # No win_position, you win if there is one peg remaining
+    style = None
+    def out(end):
+        nonlocal style
 
-board = overlay_board
-board[0][0] = Tile.SELECTION
+        if index == cursor:
+            if selected:
+                newstyle = Style.CURSOR_SELECTED
+            else:
+                newstyle = Style.CURSOR
+            element = Element.CURSOR
+        elif index == jumped:
+            newstyle = Style.JUMPED
+            element = Element.HOLE
+        else:
+            newstyle = Style.NORMAL
+            element = {
+                None: Element.NONE,
+                Tile.HOLE: Element.HOLE,
+                Tile.PEG: Element.PEG,
+            }[board.tiles[index]]
+
+        if style != newstyle:
+            style = newstyle
+            print(style, end="")
+        print(element, end=end)
+
+    while index < len(board.tiles):
+        end = index + board.width
+        while index < end - 1:
+            out(" ")
+            index += 1
+        out(None)
+        index += 1
+
 
 
 class DECMode:
     CURSOR = 25
 
-
 def dec_mode_set(mode):
     return f"\033[?{mode}h"
-
 
 def dec_mode_reset(mode):
     return f"\033[?{mode}l"
 
 
+
 def cursor_show():
     print(dec_mode_set(DECMode.CURSOR), end="", flush=True)
-
 
 def cursor_hide():
     print(dec_mode_reset(DECMode.CURSOR), end="", flush=True)
 
 
-def clear():
-    """Clears the screen"""
-    if os.name == "nt":
-        _ = os.system("cls")
-    else:
-        _ = os.system("clear")
+
+def index_right(list, element, start, end):
+    return len(list) - 1 - list[::-1].index(element, len(list) - end, len(list) - start)
 
 
-def show_board():
-    """Shows the board"""
-    clear()
-    for row in board:
-        for col in row:
-            print(col, end=" ")
-        print()
+
+game = ENGLISH
 
 
-def check_winned():
-    """Checks the current position to see if the player won"""
-    if EUROPEAN:
-        l_win = 0
-        for row in overlay_board:
-            for col in row:
-                if col == Tile.PEG:
-                    l_win += 1
-        return l_win == 1
-    elif ENGLISH:
-        return overlay_board == win_position
-
-
-def quit_game():
-    """Function that is called upon pressing an element of the QUIT list"""
-    clear()
-    sys.exit(0)
-
-
-def legal(selection, to):
-    """
-    Checks for legality of a move (if it is 0 or 3 stone long using the
-    Pythagorean theorem, stay in school kids, it make you better at pvp).
-    also checks if we are jumping over a peg or ourselves
-    """
-    return not (sqrt((selection[1] - to[1])**2 + (selection[0] - to[0])**2) not in [2, 0] or board[(selection[1] + to[1]) // 2][(selection[0] + to[0]) // 2] not in [Tile.PEG, Tile.TO])
-
-
-def save(overlay_board):
-    """
-    Save the current game to a specified file
-    TODO: fix load bug that lead to multiple Tile.EATEN by properly exporting
-    all variables, don't forget to change CAN_JUMP_OVER after
-    """
-    cursor_show()
-    print(os.getcwd(), end="")
-    filename = input("/")
-    if filename == "":
-        return
-    file = open(filename, "w")
-    file.write(str(overlay_board))
-    file.close()
-    cursor_hide()
-
-
-def load():
-    """Load a game"""
-    global board, overlay_board
-    cursor_show()
-    print(os.getcwd(), end="")
-    filename = input("/")
-    if filename == "":
-        return
-    file = open(filename, "r")
-    overlay_board = file.read()
-    file.close()
-    board = overlay_board[:]
-    board = ast.literal_eval(board)
-    board[0][0] = Tile.SELECTION
-    overlay_board = ast.literal_eval(overlay_board)
-    cursor_hide()
 
 atexit.register(cursor_show)
 
 cursor_hide()
 
-selection = (0, 0)
-to = (0, 0)
-old = " "
-old_selection = selection
-old_to = to
-set_number = 0
-confirm_from = False
-confirm_to = False
-# TODO: break down in smaller Functions
-while True:
-    if check_winned():
+
+
+board = deepcopy(game.board)
+moves = 0
+
+cursor = board.tiles.index(Tile.PEG)
+selected = False
+jumped = None
+
+
+
+cwd = getcwd()
+
+
+
+while not game.won(game, board):
+    display(board, cursor, selected, jumped)
+
+    key = getkey()
+    while not key in BINDS:
+        key = getkey()
+
+    action = BINDS[key]
+
+    if action == Action.QUIT:
         clear()
-        if set_number < MIN_LEGAL_MOVES:
-            print("CHEATER")
-        elif set_number == MIN_LEGAL_MOVES:
-            print("NERD <3!")
+        raise SystemExit
+    elif action == Action.SAVE:
+        cursor_show()
+        print(cwd, end="/", flush=True)
+        filename = input()
+        cursor_hide()
+        if filename != "":
+            with open(filename, "bw") as file:
+                Pickler(file).dump((board, moves))
+    elif action == Action.LOAD:
+        cursor_show()
+        print(cwd, end="/", flush=True)
+        filename = input()
+        cursor_hide()
+        if filename != "":
+            with open(filename, "br") as file:
+                (board, moves) = Unpickler(file).load()
+    else:
+        column_gin = cursor % board.width
+        column_end = len(board.tiles) + column_gin
+        row_gin = cursor - column_gin
+        row_end = row_gin + board.width
+        if selected:
+            def jump(step, bound):
+                global cursor, moves, jumped
+                cmp = int.__lt__ if step >= 0 else int.__ge__
+                if cmp(cursor + step * 2, bound) and board.tiles[cursor + step * 2] == Tile.HOLE and board.tiles[cursor + step] == Tile.PEG:
+                    board.tiles[cursor] = Tile.HOLE
+                    cursor += step
+                    board.tiles[cursor] = Tile.HOLE
+                    jumped = cursor
+                    cursor += step
+                    board.tiles[cursor] = Tile.PEG
+                    moves += 1
+
+            if action == Action.RIGHT:
+                jump(1, row_end)
+            elif action == Action.LEFT:
+                jump(-1, row_gin)
+            elif action == Action.DOWN:
+                jump(board.width, len(board.tiles))
+            elif action == Action.UP:
+                jump(-board.width, 0)
+
+            selected = False
         else:
-            print(f"GG!\nIn {set_number} moves!")
-        sys.exit(0)
+            def move(step, gin, end, fall):
+                def find(gin, end):
+                    return gin + board.tiles[gin:end:step].index(Tile.PEG) * step
 
+                try:
+                    if cursor + step >= 0:
+                        try:
+                            return find(cursor + step, end)
+                        except ValueError:
+                            return find(gin, cursor) if gin != None else fall
+                    else:
+                        return find(gin, cursor) if gin != None else fall
+                except ValueError:
+                    return fall
 
-    while not confirm_from:
-        show_board()
-        key = getkey()
+            try:
+                next = board.tiles.index(Tile.PEG, cursor + 1)
+            except ValueError:
+                next = board.tiles.index(Tile.PEG)
 
-        if key in JUMP_LEFT:
-            board[selection[1]][selection[0]] = old
-            old = overlay_board[selection[1]][(selection[0] - 1) % len(board)]
-            selection = (selection[0] - 1) % len(board), selection[1]
-            board[selection[1]][selection[0]] = Tile.SELECTION
+            try:
+                previous = index_right(board.tiles, Tile.PEG, 0, cursor)
+            except ValueError:
+                previous = index_right(board.tiles, Tile.PEG, 0, len(board.tiles))
 
-        elif key in JUMP_DOWN:
-            board[selection[1]][selection[0]] = old
-            old = overlay_board[(selection[1] + 1) % len(board)][selection[0]]
-            selection = selection[0], (selection[1] + 1) % len(board)
-            board[selection[1]][selection[0]] = Tile.SELECTION
-
-        elif key in JUMP_UP:
-            board[selection[1]][selection[0]] = old
-            old = overlay_board[(selection[1] - 1) % len(board)][selection[0]]
-            selection = selection[0], (selection[1] - 1) % len(board)
-            board[selection[1]][selection[0]] = Tile.SELECTION
-
-        elif key in JUMP_RIGHT:
-            board[selection[1]][selection[0]] = old
-            old = overlay_board[selection[1]][(selection[0] + 1) % len(board)]
-            selection = (selection[0] + 1) % len(board), selection[1]
-            board[selection[1]][selection[0]] = Tile.SELECTION
-
-        elif key in CONFIRM and old == Tile.PEG:
-            confirm_from, confirm_to = True, False
-            if set_number > 0:
-                overlay_board[(old_selection[1] + old_to[1]) // 2][
-                    (old_selection[0] + old_to[0]) // 2
-                ] = Tile.HOLE
-                board[(old_selection[1] + old_to[1]) // 2][(old_selection[0] + old_to[0]) // 2] = Tile.HOLE
-
-        elif key in QUIT:
-            quit_game()
-
-        elif key in SAVE:
-            save(overlay_board)
-
-        elif key in LOAD:
-            load()
-            selection = (0, 0)
-            to = (0, 0)
-            old = " "
-            old_selection = selection
-            old_to = to
-            set_number = 0
-            confirm_from = False
-            confirm_to = False
-
-    board[selection[1]][selection[0]] = Tile.TO
-    overlay_board[selection[1]][selection[0]] = Tile.FROM
-    old = Tile.FROM
-    to = selection
-    while not confirm_to:
-        show_board()
-        key = getkey()
-
-        if key in JUMP_LEFT:
-            board[to[1]][to[0]] = old
-            old = overlay_board[to[1]][(to[0] - 1) % len(board)]
-            to = (to[0] - 1) % len(board), to[1]
-            board[to[1]][to[0]] = Tile.TO
-
-        elif key in JUMP_DOWN:
-            board[to[1]][to[0]] = old
-            old = overlay_board[(to[1] + 1) % len(board)][to[0]]
-            to = to[0], (to[1] + 1) % len(board)
-            board[to[1]][to[0]] = Tile.TO
-
-        elif key in JUMP_UP:
-            board[to[1]][to[0]] = old
-            old = overlay_board[(to[1] - 1) % len(board)][to[0]]
-            to = to[0], (to[1] - 1) % len(board)
-            board[to[1]][to[0]] = Tile.TO
-
-        elif key in JUMP_RIGHT:
-            board[to[1]][to[0]] = old
-            old = overlay_board[to[1]][(to[0] + 1) % len(board)]
-            to = (to[0] + 1) % len(board), to[1]
-            board[to[1]][to[0]] = Tile.TO
-
-        elif key in CONFIRM and old in CAN_JUMP_OVER and legal(selection, to):
-            if old == Tile.FROM:
-                overlay_board[selection[1]][selection[0]] = Tile.PEG
-                board[selection[1]][selection[0]] = Tile.SELECTION
-                old = Tile.PEG
-                confirm_from = False
-                confirm_to = False
-                # TODO: Don't use break to cancel to selection
-                break
+            if action == Action.RIGHT:
+                cursor = move(1, None, row_end, next)
+            elif action == Action.LEFT:
+                cursor = move(-1, None, row_gin - 1 if row_gin - 1 >= 0 else None, previous)
+            elif action == Action.DOWN:
+                cursor = move(board.width, column_gin, column_end, next)
+            elif action == Action.UP:
+                cursor = move(-board.width, column_end - board.width, None, previous)
             else:
-                confirm_to = True
+                selected = True
 
-        elif key in QUIT:
-            quit_game()
 
-        # fixing Tile.EATEN issue would fix this too
-        # elif key in SAVE:
-        #     save(overlay_board)
 
-        elif key in LOAD:
-            load()
-            selection = (0, 0)
-            to = (0, 0)
-            old = " "
-            old_selection = selection
-            old_to = to
-            set_number = 0
-            confirm_from = False
-            confirm_to = False
-            # TODO: Don't use break after load
-            break
+display(board, None, None, None)
 
-    if confirm_to:
-        old_selection = selection
-        old_to = to
-        board[(selection[1] + to[1]) // 2][(selection[0] + to[0]) // 2] = Tile.EATEN
-        board[selection[1]][selection[0]] = Tile.HOLE
-        board[to[1]][to[0]] = Tile.SELECTION
-        overlay_board[(selection[1] + to[1]) // 2][(selection[0] + to[0]) // 2] = Tile.EATEN
-        overlay_board[selection[1]][selection[0]] = Tile.HOLE
-        overlay_board[to[1]][to[0]] = Tile.PEG
-        confirm_from = False
-        confirm_to = False
-        selection = to
-        old = Tile.PEG
-        set_number += 1
+if moves < game.minimum_moves:
+    print("CHEATER")
+elif moves == game.minimum_moves:
+    print("NERD <3!")
+else:
+    print("GG!\nIn ", end="")
+    print(moves, end="")
+    print(" moves!")
