@@ -161,10 +161,11 @@ def clear():
     system(CLEAR)
 
 class CharacterAttribute:
-    NORMAL = 0
-    BOLD = 1
-    RED = 91
-    BLUE = 94
+    WEIGHT_NORMAL = 0
+    WEIGHT_BOLD = 1
+    FOREGROUND_NORMAL = 39
+    FOREGROUND_RED = 91
+    FOREGROUND_BLUE = 94
 
 def character_attributes(*attributes):
     return f"\033[{';'.join(str(attribute) for attribute in attributes)}m"
@@ -178,10 +179,10 @@ class Element:
     CURSOR = "*"
 
 class Style:
-    NORMAL = character_attributes(CharacterAttribute.NORMAL)
-    CURSOR = character_attributes(CharacterAttribute.BOLD)
-    CURSOR_SELECTED = character_attributes(CharacterAttribute.BOLD, CharacterAttribute.RED)
-    JUMPED = character_attributes(CharacterAttribute.NORMAL, CharacterAttribute.RED)
+    NORMAL = character_attributes(CharacterAttribute.WEIGHT_NORMAL, CharacterAttribute.FOREGROUND_NORMAL)
+    CURSOR = character_attributes(CharacterAttribute.WEIGHT_BOLD, CharacterAttribute.FOREGROUND_NORMAL)
+    CURSOR_SELECTED = character_attributes(CharacterAttribute.WEIGHT_BOLD, CharacterAttribute.FOREGROUND_RED)
+    JUMPED = character_attributes(CharacterAttribute.WEIGHT_NORMAL, CharacterAttribute.FOREGROUND_BLUE)
 
 def display(board, cursor, selected, jumped):
     clear()
